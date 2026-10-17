@@ -10,6 +10,7 @@ them work, and read what they hand back.
 - **Bring any AI**: Anthropic (Claude), any OpenAI-compatible API (OpenAI, OpenRouter, Groq, Together, a local Ollama), or the built-in demo
 - **One model per agent**: put your support agent on a fast, cheap model and your bug fixer on a strong one
 - **Task board**: to do, working, done and needs attention, updated live
+- **Readable results**: formatted output you can copy or download as Markdown
 - **Your keys stay yours**: keys are read from your local `.env` file only, never saved in the office data or sent to the browser
 - Light and dark mode, no build step, runs on Node 22+
 
