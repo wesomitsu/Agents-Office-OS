@@ -141,7 +141,29 @@ document.addEventListener('click', async (e) => {
 });
 
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && e.target.dataset?.agent) openAgent(office.agents.find((a) => a.id === e.target.dataset.agent));
+  if (e.key === 'Enter' && e.target.dataset?.agent) return openAgent(office.agents.find((a) => a.id === e.target.dataset.agent));
+  // Single-key shortcuts, ignored while typing or when a dialog is open.
+  const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable;
+  if (typing || e.metaKey || e.ctrlKey || e.altKey || document.querySelector('dialog[open]')) return;
+  if (e.key === 'n') {
+    e.preventDefault();
+    $('#task-dialog').showModal();
+  } else if (e.key === 'h') {
+    e.preventDefault();
+    openAgent(null);
+  } else if (e.key === 'f') {
+    e.preventDefault();
+    $('#filter').focus();
+  } else if (/^[1-9]$/.test(e.key) && office.agents[Number(e.key) - 1]) {
+    // 1-9: show only that agent's tasks (press 0 for everyone)
+    filter = office.agents[Number(e.key) - 1].id;
+    render();
+  } else if (e.key === '0') {
+    filter = '';
+    render();
+  } else if (e.key === '?') {
+    $('#keys').hidden = !$('#keys').hidden;
+  }
 });
 
 $('#task-dialog').addEventListener('close', async () => {
