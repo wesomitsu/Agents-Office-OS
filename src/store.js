@@ -79,10 +79,28 @@ export function createStore(path) {
       const t = state.tasks.find((x) => x.id === id);
       if (!t) return null;
       if (changes.status && !STATUSES.has(changes.status)) throw new Error(`bad status "${changes.status}"`);
-      for (const k of ['status', 'output', 'error', 'title', 'details']) if (k in changes) t[k] = String(changes[k]);
+      for (const k of ['status', 'output', 'error', 'title', 'details', 'startedAt', 'finishedAt']) if (k in changes) t[k] = String(changes[k]);
       t.updatedAt = new Date().toISOString();
       save();
       return t;
+    },
+
+    // Per-agent counts and average run time for finished tasks.
+    stats() {
+      const out = {};
+      for (const a of state.agents) out[a.id] = { done: 0, failed: 0, avgSeconds: null };
+      const totals = {};
+      for (const t of state.tasks) {
+        const s = out[t.agentId];
+        if (!s || (t.status !== 'done' && t.status !== 'failed')) continue;
+        s[t.status]++;
+        if (t.status === 'done' && t.startedAt && t.finishedAt) {
+          const secs = (Date.parse(t.finishedAt) - Date.parse(t.startedAt)) / 1000;
+          (totals[t.agentId] ??= []).push(secs);
+        }
+      }
+      for (const [id, list] of Object.entries(totals)) out[id].avgSeconds = Math.round((list.reduce((a, b) => a + b, 0) / list.length) * 10) / 10;
+      return out;
     },
 
     removeTask(id) {

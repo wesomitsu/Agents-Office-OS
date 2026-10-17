@@ -35,7 +35,9 @@ function render() {
   $('#desks').innerHTML =
     agents
       .map((a, i) => {
-        const open = tasks.filter((t) => t.agentId === a.id && t.status !== 'done').length;
+        const open = tasks.filter((t) => t.agentId === a.id && (t.status === 'todo' || t.status === 'working')).length;
+        const st = office.stats?.[a.id];
+        const record = st?.done ? `${st.done} done${st.avgSeconds !== null ? ` · ~${st.avgSeconds < 60 ? `${Math.round(st.avgSeconds)}s` : `${Math.round(st.avgSeconds / 60)}m`}` : ''}` : 'No tasks yet';
         const provider = providers.find((p) => p.id === a.provider);
         return `<article class="desk ${busy.has(a.id) ? 'working' : 'idle'}" data-agent="${esc(a.id)}" style="animation-delay:${i * 60}ms" tabindex="0" aria-label="${esc(a.name)}, ${esc(a.role)}">
           <span class="status" title="${busy.has(a.id) ? 'Working' : 'Available'}"></span>
@@ -47,6 +49,7 @@ function render() {
           </div>
           <h3>${esc(a.name)}</h3>
           <div class="role">${esc(a.role)}</div>
+          <div class="record">${esc(record)}</div>
           <div class="meta"><span class="tag">${esc(provider?.label.split(' ')[0] ?? a.provider)}${a.model ? ` · ${esc(a.model)}` : ''}</span><span>${open} open</span></div>
         </article>`;
       })

@@ -23,12 +23,12 @@ export function createRunner(store, { complete: call = complete, company = {} } 
       if (!agent) throw new Error('the agent for this task was removed');
 
       running.add(taskId);
-      store.updateTask(taskId, { status: 'working', error: '' });
+      store.updateTask(taskId, { status: 'working', error: '', startedAt: new Date().toISOString(), finishedAt: '' });
       try {
         const output = await call({ provider: agent.provider, model: agent.model, ...buildPrompt(agent, task, company) });
-        return store.updateTask(taskId, { status: 'done', output });
+        return store.updateTask(taskId, { status: 'done', output, finishedAt: new Date().toISOString() });
       } catch (err) {
-        return store.updateTask(taskId, { status: 'failed', error: err.message });
+        return store.updateTask(taskId, { status: 'failed', error: err.message, finishedAt: new Date().toISOString() });
       } finally {
         running.delete(taskId);
       }

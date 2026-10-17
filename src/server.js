@@ -16,7 +16,7 @@ export function createApp({ store, runner, env = process.env }) {
   const company = { name: env.COMPANY_NAME ?? '', about: env.COMPANY_ABOUT ?? '' };
 
   const routes = [
-    ['GET', /^\/api\/office$/, () => ({ company, providers: providerStatus(env), templates: AGENT_TEMPLATES, agents: store.agents(), tasks: store.tasks() })],
+    ['GET', /^\/api\/office$/, () => ({ company, providers: providerStatus(env), templates: AGENT_TEMPLATES, agents: store.agents(), stats: store.stats(), tasks: store.tasks() })],
     ['POST', /^\/api\/agents$/, (_, body) => [201, store.addAgent(body)]],
     ['PATCH', /^\/api\/agents\/([\w-]+)$/, ([id], body) => store.updateAgent(id, body)],
     ['DELETE', /^\/api\/agents\/([\w-]+)$/, ([id]) => (store.removeAgent(id) ? { ok: true } : null)],
