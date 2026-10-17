@@ -58,7 +58,8 @@ The header shows which providers are ready (●) and which still need a key (○
 | 💬 Sage | Customer support replies |
 
 Click a desk to rename an agent, change its emoji, job, provider, model or
-instructions. Click **+ Hire an agent** to add someone new (SEO, sales, HR...).
+instructions. Click **+ Hire an agent** to add someone new, blank or from a template: SEO,
+Sales, Content Writer, Data Analyst or HR & Hiring.
 
 Set `COMPANY_NAME` and `COMPANY_ABOUT` in `.env` and every agent knows who they
 work for.
