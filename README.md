@@ -12,6 +12,7 @@ them work, and read what they hand back.
 - **Task board**: to do, working, done and needs attention, updated live
 - **Readable results**: formatted output you can copy or download as Markdown
 - **Follow-ups**: reply to a finished task ("make it shorter") and the agent revises it, keeping the conversation
+- **Hand-offs**: pass a result to another agent, e.g. Marketing's campaign to Social Media for posts
 - **Your keys stay yours**: keys are read from your local `.env` file only, never saved in the office data or sent to the browser
 - Light and dark mode, no build step, runs on Node 22+
 
@@ -81,6 +82,7 @@ work for.
 | `GET` | `/api/office` | Agents, tasks and provider status |
 | `POST` | `/api/tasks` | Create a task `{ title, details, agentId }` |
 | `POST` | `/api/tasks/:id/run` | Start (or redo) a task |
+| `POST` | `/api/tasks/:id/handoff` | Pass a finished result to another agent `{ agentId, note, run }` |
 | `POST` | `/api/tasks/:id/reply` | Send a follow-up `{ message }` on a finished task |
 | `PATCH`/`DELETE` | `/api/tasks/:id` | Edit or delete a task |
 | `POST` | `/api/agents` | Hire an agent |
