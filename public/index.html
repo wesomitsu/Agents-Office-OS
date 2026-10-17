@@ -1,1 +1,74 @@
-<!doctype html><title>Agents Office OS</title>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agents Office OS</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏢</text></svg>">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="logo">🏢</span><div><h1>Agents Office OS</h1><p id="company">Your AI team</p></div></div>
+    <div class="top-right">
+      <div id="providers" class="providers"></div>
+      <div class="clock" id="clock">--:--</div>
+      <button class="btn primary" id="new-task">+ New task</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="floor" aria-label="Office floor">
+      <div class="window"><span class="sun"></span><span class="cloud c1"></span><span class="cloud c2"></span></div>
+      <div class="desks" id="desks"></div>
+      <div class="decor"><span class="plant">🪴</span><span class="coffee">☕<i></i><i></i><i></i></span><span class="plant">🌿</span></div>
+    </section>
+
+    <section class="board" aria-label="Task board">
+      <div class="col" data-status="todo"><h2>To do <span class="count"></span></h2><div class="list"></div></div>
+      <div class="col" data-status="working"><h2>Working <span class="count"></span></h2><div class="list"></div></div>
+      <div class="col" data-status="done"><h2>Done <span class="count"></span></h2><div class="list"></div></div>
+      <div class="col" data-status="failed"><h2>Needs attention <span class="count"></span></h2><div class="list"></div></div>
+    </section>
+  </main>
+
+  <dialog id="task-dialog">
+    <form method="dialog" id="task-form">
+      <h3>New task</h3>
+      <label>Title<input name="title" required placeholder="Write a launch post for our new feature"></label>
+      <label>Details<textarea name="details" rows="4" placeholder="Anything the agent should know"></textarea></label>
+      <label>Assign to<select name="agentId" id="task-agent"></select></label>
+      <label class="check"><input type="checkbox" name="run" checked> Start right away</label>
+      <div class="actions"><button value="cancel" class="btn" formnovalidate>Cancel</button><button value="ok" class="btn primary">Create</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="agent-dialog">
+    <form method="dialog" id="agent-form">
+      <h3 id="agent-title">Edit agent</h3>
+      <div class="row">
+        <label class="small">Emoji<input name="emoji" maxlength="4"></label>
+        <label>Name<input name="name" required></label>
+      </div>
+      <label>Responsible for<input name="role" required placeholder="e.g. SEO"></label>
+      <div class="row">
+        <label>Provider<select name="provider" id="agent-provider"></select></label>
+        <label>Model<input name="model" placeholder="default"></label>
+      </div>
+      <label>Instructions<textarea name="instructions" rows="5"></textarea></label>
+      <p class="hint">API keys live in your <code>.env</code> file, never in the office.</p>
+      <div class="actions"><button value="delete" class="btn danger" id="agent-delete" formnovalidate>Remove</button><span></span><button value="cancel" class="btn" formnovalidate>Cancel</button><button value="ok" class="btn primary">Save</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="output-dialog">
+    <form method="dialog">
+      <h3 id="output-title"></h3>
+      <pre id="output-body"></pre>
+      <div class="actions"><button value="copy" class="btn" id="copy-output">Copy</button><button value="close" class="btn primary">Close</button></div>
+    </form>
+  </dialog>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
