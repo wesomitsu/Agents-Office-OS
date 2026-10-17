@@ -37,7 +37,8 @@ export function providerStatus(env = process.env) {
   }));
 }
 
-export async function complete({ provider, model, system, prompt }, { env = process.env, fetch = globalThis.fetch, anthropic } = {}) {
+// history: earlier turns of the same task, [{ role: 'user' | 'assistant', content }].
+export async function complete({ provider, model, system, prompt, history = [] }, { env = process.env, fetch = globalThis.fetch, anthropic } = {}) {
   const p = PROVIDERS[provider];
   if (!p) throw new Error(`Unknown provider "${provider}"`);
   if (!p.configured(env)) throw new Error(`${p.label} isn't set up: add ${p.keyEnv} to your .env file`);
@@ -55,7 +56,7 @@ export async function complete({ provider, model, system, prompt }, { env = proc
       model: useModel,
       max_tokens: 16000,
       system,
-      messages: [{ role: 'user', content: prompt }],
+      messages: [...history, { role: 'user', content: prompt }],
       // If a safety check declines the request, let the API retry it on its
       // recommended fallback model instead of failing the task.
       betas: ['server-side-fallback-2026-07-01'],
@@ -80,6 +81,7 @@ export async function complete({ provider, model, system, prompt }, { env = proc
       model: useModel,
       messages: [
         { role: 'system', content: system },
+        ...history,
         { role: 'user', content: prompt },
       ],
     }),

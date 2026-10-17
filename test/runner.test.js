@@ -57,3 +57,33 @@ test('records timings and per-agent stats', async () => {
   assert.deepEqual(stats.bugs, { done: 0, failed: 1, avgSeconds: null });
   assert.deepEqual(stats.support, { done: 0, failed: 0, avgSeconds: null });
 });
+
+test('follow-ups send the whole conversation and keep the thread', async () => {
+  const s = store();
+  const t = s.addTask({ title: 'Write a tagline', agentId: 'marketing' });
+  const calls = [];
+  const runner = createRunner(s, { complete: async (req) => (calls.push(req), { text: `v${calls.length}`, usage: { input: 1, output: 1 } }) });
+  await assert.rejects(runner.reply(t.id, 'shorter'), /once the task is done/);
+  await runner.run(t.id);
+  const r = await runner.reply(t.id, 'make it shorter');
+  assert.equal(r.output, 'v2');
+  assert.deepEqual(calls[1].history, [
+    { role: 'user', content: 'Write a tagline' },
+    { role: 'assistant', content: 'v1' },
+  ]);
+  assert.equal(calls[1].prompt, 'make it shorter');
+  assert.equal(s.task(t.id).thread.length, 4);
+  assert.deepEqual(s.task(t.id).usage, { input: 2, output: 2 });
+});
+
+test('a failed follow-up keeps the earlier answer', async () => {
+  const s = store();
+  const t = s.addTask({ title: 'Tagline', agentId: 'marketing' });
+  let n = 0;
+  const runner = createRunner(s, { complete: async () => { if (++n > 1) throw new Error('rate limited'); return { text: 'first', usage: { input: 0, output: 0 } }; } });
+  await runner.run(t.id);
+  const r = await runner.reply(t.id, 'again');
+  assert.equal(r.status, 'done');
+  assert.equal(r.output, 'first');
+  assert.match(r.error, /Follow-up failed: rate limited/);
+});

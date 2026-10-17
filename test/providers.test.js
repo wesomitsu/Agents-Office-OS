@@ -65,3 +65,15 @@ test('openai-compatible: surfaces API errors', async () => {
   const fetch = async () => ({ ok: false, status: 401, text: async () => 'bad key' });
   await assert.rejects(complete({ provider: 'openai', ...ask }, { env: { OPENAI_API_KEY: 'x' }, fetch }), /returned 401: bad key/);
 });
+
+test('passes earlier turns to both providers', async () => {
+  const history = [{ role: 'user', content: 'Q1' }, { role: 'assistant', content: 'A1' }];
+  let sent;
+  const anthropic = { beta: { messages: { create: async (b) => ((sent = b), { stop_reason: 'end_turn', content: [] }) } } };
+  await complete({ provider: 'anthropic', ...ask, history }, { env: { ANTHROPIC_API_KEY: 'k' }, anthropic });
+  assert.deepEqual(sent.messages.map((m) => m.content), ['Q1', 'A1', ask.prompt]);
+  let body;
+  const fetch = async (_, i) => ((body = JSON.parse(i.body)), { ok: true, json: async () => ({ choices: [] }) });
+  await complete({ provider: 'openai', ...ask, history }, { env: { OPENAI_API_KEY: 'x' }, fetch });
+  assert.deepEqual(body.messages.map((m) => m.role), ['system', 'user', 'assistant', 'user']);
+});

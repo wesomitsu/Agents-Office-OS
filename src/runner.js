@@ -25,11 +25,43 @@ export function createRunner(store, { complete: call = complete, company = {} } 
       running.add(taskId);
       store.updateTask(taskId, { status: 'working', error: '', startedAt: new Date().toISOString(), finishedAt: '' });
       try {
-        const { text, usage } = await call({ provider: agent.provider, model: agent.model, ...buildPrompt(agent, task, company) });
+        const { system, prompt } = buildPrompt(agent, task, company);
+        const { text, usage } = await call({ provider: agent.provider, model: agent.model, system, prompt });
         store.addUsage(taskId, usage);
+        store.setThread(taskId, [
+          { role: 'user', content: prompt },
+          { role: 'assistant', content: text },
+        ]);
         return store.updateTask(taskId, { status: 'done', output: text, finishedAt: new Date().toISOString() });
       } catch (err) {
         return store.updateTask(taskId, { status: 'failed', error: err.message, finishedAt: new Date().toISOString() });
+      } finally {
+        running.delete(taskId);
+      }
+    },
+
+    // Sends a follow-up ("make it shorter") to the agent, keeping the conversation.
+    async reply(taskId, message) {
+      const task = store.task(taskId);
+      if (!task) throw new Error('task not found');
+      if (!String(message ?? '').trim()) throw new Error('message is required');
+      if (task.status !== 'done' || !task.thread?.length) throw new Error('you can reply once the task is done');
+      if (running.has(taskId)) throw new Error('task is already running');
+      const agent = store.agent(task.agentId);
+      if (!agent) throw new Error('the agent for this task was removed');
+
+      running.add(taskId);
+      const history = task.thread;
+      store.updateTask(taskId, { status: 'working', error: '', startedAt: new Date().toISOString(), finishedAt: '' });
+      try {
+        const { system } = buildPrompt(agent, task, company);
+        const { text, usage } = await call({ provider: agent.provider, model: agent.model, system, prompt: message, history });
+        store.addUsage(taskId, usage);
+        store.setThread(taskId, [...history, { role: 'user', content: message }, { role: 'assistant', content: text }]);
+        return store.updateTask(taskId, { status: 'done', output: text, finishedAt: new Date().toISOString() });
+      } catch (err) {
+        // Keep the earlier answer; just report that the follow-up failed.
+        return store.updateTask(taskId, { status: 'done', error: `Follow-up failed: ${err.message}`, finishedAt: new Date().toISOString() });
       } finally {
         running.delete(taskId);
       }
