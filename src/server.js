@@ -1,5 +1,6 @@
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
+import { timingSafeEqual } from 'node:crypto';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { providerStatus } from './providers.js';
@@ -33,6 +34,10 @@ export function createApp({ store, runner, env = process.env }) {
   ];
 
   return async function handle(req, res) {
+    if (env.OFFICE_PASSWORD && !authorized(req, env.OFFICE_PASSWORD)) {
+      res.writeHead(401, { 'WWW-Authenticate': 'Basic realm="Agents Office", charset="UTF-8"' });
+      return res.end('Login required');
+    }
     const url = new URL(req.url, 'http://localhost');
     try {
       if (url.pathname.startsWith('/api/')) {
@@ -53,6 +58,16 @@ export function createApp({ store, runner, env = process.env }) {
       return send(res, 400, { error: err.message });
     }
   };
+}
+
+// HTTP Basic auth: any username, the password must match OFFICE_PASSWORD.
+function authorized(req, password) {
+  const header = req.headers.authorization ?? '';
+  if (!header.startsWith('Basic ')) return false;
+  const given = Buffer.from(header.slice(6), 'base64').toString('utf8').split(':').slice(1).join(':');
+  const a = Buffer.from(given);
+  const b = Buffer.from(password);
+  return a.length === b.length && timingSafeEqual(a, b);
 }
 
 async function readJson(req) {
