@@ -42,7 +42,11 @@ export async function complete({ provider, model, system, prompt }, { env = proc
   if (!p.configured(env)) throw new Error(`${p.label} isn't set up: add ${p.keyEnv} to your .env file`);
   const useModel = model || p.defaultModel;
 
-  if (provider === 'demo') return demoReply(system, prompt);
+  if (provider === 'demo') {
+    // A short pause so you can see the agent "working" in the office.
+    await new Promise((r) => setTimeout(r, Number(env.DEMO_DELAY_MS ?? 2500)));
+    return demoReply(system, prompt);
+  }
 
   if (provider === 'anthropic') {
     const client = anthropic ?? new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });

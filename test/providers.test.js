@@ -11,7 +11,7 @@ test('reports which providers are configured, without exposing keys', () => {
 });
 
 test('demo provider answers without a key', async () => {
-  const text = await complete({ provider: 'demo', ...ask }, { env: {} });
+  const text = await complete({ provider: 'demo', ...ask }, { env: { DEMO_DELAY_MS: '0' } });
   assert.match(text, /demo reply from Sky, the Social Media agent/);
 });
 
