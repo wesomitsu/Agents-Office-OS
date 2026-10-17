@@ -11,7 +11,7 @@ test('reports which providers are configured, without exposing keys', () => {
 });
 
 test('demo provider answers without a key', async () => {
-  const text = await complete({ provider: 'demo', ...ask }, { env: { DEMO_DELAY_MS: '0' } });
+  const { text } = await complete({ provider: 'demo', ...ask }, { env: { DEMO_DELAY_MS: '0' } });
   assert.match(text, /demo reply from Sky, the Social Media agent/);
 });
 
@@ -27,13 +27,14 @@ test('anthropic: sends system + prompt with fallbacks and joins text blocks', as
       messages: {
         create: async (body) => {
           sent = body;
-          return { stop_reason: 'end_turn', content: [{ type: 'thinking', thinking: '' }, { type: 'text', text: 'Hello' }] };
+          return { stop_reason: 'end_turn', content: [{ type: 'thinking', thinking: '' }, { type: 'text', text: 'Hello' }], usage: { input_tokens: 12, output_tokens: 34 } };
         },
       },
     },
   };
-  const text = await complete({ provider: 'anthropic', model: '', ...ask }, { env: { ANTHROPIC_API_KEY: 'k' }, anthropic });
+  const { text, usage } = await complete({ provider: 'anthropic', model: '', ...ask }, { env: { ANTHROPIC_API_KEY: 'k' }, anthropic });
   assert.equal(text, 'Hello');
+  assert.deepEqual(usage, { input: 12, output: 34 });
   assert.equal(sent.model, 'claude-opus-5-5');
   assert.equal(sent.system, ask.system);
   assert.equal(sent.fallbacks, 'default');
@@ -49,11 +50,12 @@ test('openai-compatible: uses the base URL and bearer key', async () => {
   const fetch = async (u, i) => {
     url = u;
     init = i;
-    return { ok: true, json: async () => ({ choices: [{ message: { content: ' Hi there ' } }] }) };
+    return { ok: true, json: async () => ({ choices: [{ message: { content: ' Hi there ' } }], usage: { prompt_tokens: 5, completion_tokens: 7 } }) };
   };
   const env = { OPENAI_API_KEY: 'sk-test', OPENAI_BASE_URL: 'https://openrouter.ai/api/v1/' };
-  const text = await complete({ provider: 'openai', model: 'some/model', ...ask }, { env, fetch });
+  const { text, usage } = await complete({ provider: 'openai', model: 'some/model', ...ask }, { env, fetch });
   assert.equal(text, 'Hi there');
+  assert.deepEqual(usage, { input: 5, output: 7 });
   assert.equal(url, 'https://openrouter.ai/api/v1/chat/completions');
   assert.equal(init.headers.Authorization, 'Bearer sk-test');
   assert.equal(JSON.parse(init.body).messages[0].role, 'system');
