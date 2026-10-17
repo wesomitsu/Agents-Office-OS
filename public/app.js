@@ -109,6 +109,7 @@ document.addEventListener('click', async (e) => {
       $('#output-title').textContent = task.title;
       $('#output-body').innerHTML = renderMarkdown(task.output);
       $('#output-body').dataset.raw = task.output;
+      $('#output-body').dataset.title = task.title;
       return $('#output-dialog').showModal();
     }
     await refresh();
@@ -153,6 +154,15 @@ $('#agent-template').addEventListener('change', (e) => {
   const t = office.templates?.[e.target.value];
   const f = $('#agent-form');
   for (const k of ['emoji', 'name', 'role', 'instructions']) f.elements[k].value = t ? t[k] : k === 'emoji' ? '🤖' : '';
+});
+
+$('#download-output').addEventListener('click', () => {
+  const body = $('#output-body');
+  const name = (body.dataset.title || 'result').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'result';
+  const url = URL.createObjectURL(new Blob([`# ${body.dataset.title}\n\n${body.dataset.raw}\n`], { type: 'text/markdown' }));
+  const a = Object.assign(document.createElement('a'), { href: url, download: `${name}.md` });
+  a.click();
+  URL.revokeObjectURL(url);
 });
 
 $('#copy-output').addEventListener('click', () => navigator.clipboard?.writeText($('#output-body').dataset.raw ?? ''));
