@@ -25,8 +25,9 @@ export function createRunner(store, { complete: call = complete, company = {} } 
       running.add(taskId);
       store.updateTask(taskId, { status: 'working', error: '', startedAt: new Date().toISOString(), finishedAt: '' });
       try {
-        const output = await call({ provider: agent.provider, model: agent.model, ...buildPrompt(agent, task, company) });
-        return store.updateTask(taskId, { status: 'done', output, finishedAt: new Date().toISOString() });
+        const { text, usage } = await call({ provider: agent.provider, model: agent.model, ...buildPrompt(agent, task, company) });
+        store.addUsage(taskId, usage);
+        return store.updateTask(taskId, { status: 'done', output: text, finishedAt: new Date().toISOString() });
       } catch (err) {
         return store.updateTask(taskId, { status: 'failed', error: err.message, finishedAt: new Date().toISOString() });
       } finally {

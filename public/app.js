@@ -74,6 +74,8 @@ function render() {
   $('#agent-provider').innerHTML = providers.map((p) => `<option value="${esc(p.id)}">${esc(p.label)}${p.configured ? '' : ' (no key yet)'}</option>`).join('');
 }
 
+const fmtTokens = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n));
+
 function card(t) {
   const a = office.agents.find((x) => x.id === t.agentId);
   const buttons = {
@@ -85,6 +87,7 @@ function card(t) {
   return `<div class="card">
     <div class="who">${esc(a?.emoji ?? '❔')} ${esc(a?.name ?? 'Removed agent')}</div>
     <div class="title">${esc(t.title)}</div>
+    ${t.usage && t.usage.input + t.usage.output ? `<div class="tokens">${fmtTokens(t.usage.input + t.usage.output)} tokens</div>` : ''}
     ${t.error ? `<div class="err">${esc(t.error)}</div>` : ''}
     <div class="buttons">${buttons}${t.status !== 'working' ? `<button class="btn small" data-delete="${t.id}" title="Delete">✕</button>` : ''}</div>
   </div>`;

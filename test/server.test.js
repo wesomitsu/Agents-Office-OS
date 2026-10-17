@@ -10,7 +10,7 @@ import { createStore } from '../src/store.js';
 
 async function withServer(fn, env = { ANTHROPIC_API_KEY: 'secret-value' }) {
   const store = createStore(join(mkdtempSync(join(tmpdir(), 'office-')), 'office.json'));
-  const runner = createRunner(store, { complete: async () => 'All done' });
+  const runner = createRunner(store, { complete: async () => ({ text: 'All done', usage: { input: 10, output: 20 } }) });
   const server = createServer(createApp({ store, runner, env }));
   await new Promise((r) => server.listen(0, '127.0.0.1', r));
   const base = `http://127.0.0.1:${server.address().port}`;
