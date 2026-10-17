@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 
-// Each provider takes { model, system, prompt } and returns the reply text.
+// Each provider takes { model, system, prompt } and returns { text, usage },
+// where usage is { input, output } token counts (0 when the API doesn't say).
 // Keys come only from environment variables (your local .env file).
 
 export const PROVIDERS = {
@@ -45,7 +46,7 @@ export async function complete({ provider, model, system, prompt }, { env = proc
   if (provider === 'demo') {
     // A short pause so you can see the agent "working" in the office.
     await new Promise((r) => setTimeout(r, Number(env.DEMO_DELAY_MS ?? 2500)));
-    return demoReply(system, prompt);
+    return { text: demoReply(system, prompt), usage: { input: 0, output: 0 } };
   }
 
   if (provider === 'anthropic') {
@@ -61,7 +62,10 @@ export async function complete({ provider, model, system, prompt }, { env = proc
       fallbacks: 'default',
     });
     if (res.stop_reason === 'refusal') throw new Error('The model declined this task');
-    return res.content.filter((b) => b.type === 'text').map((b) => b.text).join('\n').trim();
+    return {
+      text: res.content.filter((b) => b.type === 'text').map((b) => b.text).join('\n').trim(),
+      usage: { input: res.usage?.input_tokens ?? 0, output: res.usage?.output_tokens ?? 0 },
+    };
   }
 
   // OpenAI-compatible chat completions
@@ -82,7 +86,10 @@ export async function complete({ provider, model, system, prompt }, { env = proc
   });
   if (!res.ok) throw new Error(`${p.label} returned ${res.status}: ${(await res.text()).slice(0, 300)}`);
   const data = await res.json();
-  return String(data.choices?.[0]?.message?.content ?? '').trim();
+  return {
+    text: String(data.choices?.[0]?.message?.content ?? '').trim(),
+    usage: { input: data.usage?.prompt_tokens ?? 0, output: data.usage?.completion_tokens ?? 0 },
+  };
 }
 
 // A canned reply so the office can be tried before any key is added.
