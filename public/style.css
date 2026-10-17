@@ -29,6 +29,7 @@ h1 { font-size: 20px; margin: 0; letter-spacing: -.01em; }
 .clock { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 13px; }
 
 .btn { border: 1px solid var(--line); background: var(--panel); color: var(--ink); padding: 8px 14px; border-radius: 10px; font: inherit; cursor: pointer; transition: transform .15s, box-shadow .15s; }
+label.btn { display: inline-block; flex: 0 0 auto; color: var(--ink); font-size: 15px; }
 .btn:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
 .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; font-weight: 600; }
 .btn.danger { color: var(--bad); }
