@@ -85,8 +85,9 @@ work for.
 ## Safety notes
 
 - The server listens on `localhost` only by default. Anyone who can open the
-  office can spend your API credit, so put real authentication in front of it
-  before setting `HOST=0.0.0.0` or deploying it.
+  office can spend your API credit, so set `OFFICE_PASSWORD` (the browser asks
+  for it, any username works) before setting `HOST=0.0.0.0` or deploying, and
+  serve it over HTTPS.
 - Agents write drafts. They don't post, send emails or change your website by
   themselves; you review the result and use it.
 

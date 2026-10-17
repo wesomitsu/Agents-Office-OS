@@ -8,10 +8,10 @@ import { createApp } from '../src/server.js';
 import { createRunner } from '../src/runner.js';
 import { createStore } from '../src/store.js';
 
-async function withServer(fn) {
+async function withServer(fn, env = { ANTHROPIC_API_KEY: 'secret-value' }) {
   const store = createStore(join(mkdtempSync(join(tmpdir(), 'office-')), 'office.json'));
   const runner = createRunner(store, { complete: async () => 'All done' });
-  const server = createServer(createApp({ store, runner, env: { ANTHROPIC_API_KEY: 'secret-value' } }));
+  const server = createServer(createApp({ store, runner, env }));
   await new Promise((r) => server.listen(0, '127.0.0.1', r));
   const base = `http://127.0.0.1:${server.address().port}`;
   const api = async (method, path, body) => {
@@ -63,4 +63,15 @@ test('static files cannot escape the public folder', async () => {
     const res = await fetch(`${base}/..%2f..%2fpackage.json`);
     assert.notEqual(res.status, 200);
   });
+});
+
+test('OFFICE_PASSWORD puts the whole office behind a login', async () => {
+  await withServer(async (_, base) => {
+    assert.equal((await fetch(`${base}/api/office`)).status, 401);
+    assert.equal((await fetch(`${base}/`)).status, 401);
+    const bad = { Authorization: `Basic ${Buffer.from('me:nope').toString('base64')}` };
+    assert.equal((await fetch(`${base}/api/office`, { headers: bad })).status, 401);
+    const good = { Authorization: `Basic ${Buffer.from('me:s3cret:pw').toString('base64')}` };
+    assert.equal((await fetch(`${base}/api/office`, { headers: good })).status, 200);
+  }, { OFFICE_PASSWORD: 's3cret:pw' });
 });
