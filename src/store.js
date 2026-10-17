@@ -75,6 +75,14 @@ export function createStore(path) {
       return t;
     },
 
+    // Adds token counts from one model call to the task's running total.
+    addUsage(id, usage) {
+      const t = state.tasks.find((x) => x.id === id);
+      if (!t || !usage) return;
+      t.usage = { input: (t.usage?.input ?? 0) + usage.input, output: (t.usage?.output ?? 0) + usage.output };
+      save();
+    },
+
     updateTask(id, changes) {
       const t = state.tasks.find((x) => x.id === id);
       if (!t) return null;

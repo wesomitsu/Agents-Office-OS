@@ -19,11 +19,12 @@ test('runs a task and stores the output', async () => {
   const s = store();
   const t = s.addTask({ title: 'Tweet about v2', agentId: 'social' });
   let seen;
-  const runner = createRunner(s, { complete: async (req) => ((seen = req), 'Done!') });
+  const runner = createRunner(s, { complete: async (req) => ((seen = req), { text: 'Done!', usage: { input: 3, output: 4 } }) });
   const result = await runner.run(t.id);
   assert.equal(result.status, 'done');
   assert.equal(result.output, 'Done!');
   assert.equal(seen.provider, 'demo');
+  assert.deepEqual(result.usage, { input: 3, output: 4 });
 });
 
 test('marks failures and blocks double runs', async () => {
@@ -45,7 +46,7 @@ test('records timings and per-agent stats', async () => {
   const a = s.addTask({ title: 'Post 1', agentId: 'social' });
   const b = s.addTask({ title: 'Post 2', agentId: 'social' });
   const c = s.addTask({ title: 'Bug', agentId: 'bugs' });
-  const runner = createRunner(s, { complete: async ({ prompt }) => { if (prompt === 'Bug') throw new Error('no'); return 'ok'; } });
+  const runner = createRunner(s, { complete: async ({ prompt }) => { if (prompt === 'Bug') throw new Error('no'); return { text: 'ok', usage: { input: 1, output: 1 } }; } });
   await runner.run(a.id);
   await runner.run(b.id);
   await runner.run(c.id);

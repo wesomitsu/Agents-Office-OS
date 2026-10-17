@@ -100,6 +100,7 @@ main { padding: 0 24px 40px; display: grid; gap: 20px; }
 .card { border: 1px solid var(--line); border-radius: 12px; padding: 10px; background: var(--bg); animation: in .35s both; }
 .card .who { font-size: 12px; color: var(--muted); }
 .card .title { font-weight: 600; margin: 2px 0 6px; overflow-wrap: anywhere; }
+.card .tokens { font-size: 11px; color: var(--muted); margin: -2px 0 6px; }
 .card .err { color: var(--bad); font-size: 12px; margin-bottom: 6px; overflow-wrap: anywhere; }
 .card .buttons { display: flex; gap: 6px; flex-wrap: wrap; }
 .col[data-status="working"] .card { border-color: color-mix(in srgb, var(--warn) 50%, var(--line)); }
