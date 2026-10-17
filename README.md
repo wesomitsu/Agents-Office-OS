@@ -32,6 +32,16 @@ npm start
 Open http://localhost:3000. Every agent starts on the **Demo** provider, so you
 can try the office before adding any keys.
 
+### With Docker
+
+```sh
+docker build -t agents-office .
+docker run -p 3000:3000 --env-file .env -e OFFICE_PASSWORD=change-me -v office-data:/data agents-office
+```
+
+Your agents and tasks are kept in the `office-data` volume. Keys come from your
+`.env` file at run time and are never baked into the image.
+
 ## Add your AI providers
 
 ```sh
