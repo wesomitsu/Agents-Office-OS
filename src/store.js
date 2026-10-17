@@ -53,6 +53,21 @@ export function createStore(path) {
       return state.agents.length < before;
     },
 
+    // Replaces the staff with an exported list. Tasks for removed agents stay
+    // on the board, marked as "Removed agent" in the UI.
+    importAgents(list) {
+      if (!Array.isArray(list) || list.length === 0) throw new Error('expected a non-empty list of agents');
+      const agents = list.map((input, i) => {
+        if (!input?.name || !input?.role) throw new Error(`agent ${i + 1} needs a name and role`);
+        const id = /^[\w-]{1,40}$/.test(input.id ?? '') ? input.id : randomUUID().slice(0, 8);
+        return { id, emoji: '🤖', provider: 'demo', model: '', instructions: '', ...pick(input) };
+      });
+      if (new Set(agents.map((a) => a.id)).size !== agents.length) throw new Error('agent ids must be unique');
+      state.agents = agents;
+      save();
+      return agents;
+    },
+
     tasks: () => state.tasks,
     task: (id) => state.tasks.find((t) => t.id === id),
 
