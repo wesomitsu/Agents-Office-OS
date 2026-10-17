@@ -119,7 +119,12 @@ document.addEventListener('click', async (e) => {
     if (t.dataset.view) {
       const task = office.tasks.find((x) => x.id === t.dataset.view);
       $('#output-title').textContent = task.title;
-      $('#output-body').innerHTML = renderMarkdown(task.output);
+      const turns = task.thread?.length > 2 ? task.thread.slice(1) : [{ role: 'assistant', content: task.output }];
+      $('#output-body').innerHTML = turns
+        .map((m) => (m.role === 'user' ? `<div class="you">You: ${esc(m.content)}</div>` : renderMarkdown(m.content)))
+        .join('<hr>');
+      $('#output-body').dataset.id = task.id;
+      $('#reply-text').value = '';
       $('#output-body').dataset.raw = task.output;
       $('#output-body').dataset.title = task.title;
       return $('#output-dialog').showModal();
@@ -180,6 +185,17 @@ $('#download-output').addEventListener('click', () => {
   const a = Object.assign(document.createElement('a'), { href: url, download: `${name}.md` });
   a.click();
   URL.revokeObjectURL(url);
+});
+
+$('#output-dialog').addEventListener('close', async () => {
+  const message = $('#reply-text').value.trim();
+  if ($('#output-dialog').returnValue !== 'reply' || !message) return;
+  try {
+    await api('POST', `/api/tasks/${$('#output-body').dataset.id}/reply`, { message });
+    await refresh();
+  } catch (err) {
+    alert(err.message);
+  }
 });
 
 $('#copy-output').addEventListener('click', () => navigator.clipboard?.writeText($('#output-body').dataset.raw ?? ''));

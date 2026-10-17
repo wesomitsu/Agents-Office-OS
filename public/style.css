@@ -126,6 +126,8 @@ label.check input { width: auto; }
 .output code { font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; }
 .output pre { margin: 8px 0; }
 .output a { color: var(--accent); }
+.output hr { border: 0; border-top: 1px dashed var(--line); margin: 12px 0; }
+.output .you { color: var(--muted); font-style: italic; margin: 10px 0 4px; }
 pre { white-space: pre-wrap; background: var(--bg); border: 1px solid var(--line); padding: 12px; border-radius: 10px; max-height: 60vh; overflow: auto; margin: 0; font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
 
 @keyframes bob { 50% { transform: translateY(-3px); } }

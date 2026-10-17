@@ -83,6 +83,15 @@ export function createStore(path) {
       save();
     },
 
+    // The conversation for a task: the request, the agent's answer, then any follow-ups.
+    setThread(id, thread) {
+      const t = state.tasks.find((x) => x.id === id);
+      if (!t) return null;
+      t.thread = thread.map(({ role, content }) => ({ role: role === 'assistant' ? 'assistant' : 'user', content: String(content) }));
+      save();
+      return t;
+    },
+
     updateTask(id, changes) {
       const t = state.tasks.find((x) => x.id === id);
       if (!t) return null;
