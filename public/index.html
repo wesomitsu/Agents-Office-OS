@@ -38,6 +38,11 @@
     </section>
   </main>
 
+  <footer class="footer">
+    <button class="linkish" onclick="document.getElementById('keys').hidden = !document.getElementById('keys').hidden">Keyboard shortcuts (?)</button>
+    <div id="keys" hidden><kbd>n</kbd> new task · <kbd>h</kbd> hire an agent · <kbd>f</kbd> filter · <kbd>1</kbd>–<kbd>9</kbd> one agent's tasks · <kbd>0</kbd> everyone · <kbd>Esc</kbd> close</div>
+  </footer>
+
   <dialog id="task-dialog">
     <form method="dialog" id="task-form">
       <h3>New task</h3>

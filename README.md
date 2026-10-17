@@ -71,6 +71,16 @@ machine or share a setup.
 Set `COMPANY_NAME` and `COMPANY_ABOUT` in `.env` and every agent knows who they
 work for.
 
+## Keyboard shortcuts
+
+| Key | Does |
+|---|---|
+| `n` | New task |
+| `h` | Hire an agent |
+| `f` | Jump to the board filter |
+| `1`–`9` | Show one agent's tasks (`0` for everyone) |
+| `?` | Show the shortcuts |
+
 ## How it works
 
 - `src/server.js`: a small HTTP server for the page and a JSON API
