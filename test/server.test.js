@@ -30,6 +30,7 @@ test('GET /api/office lists agents and providers but never keys', async () => {
     const { status, data } = await api('GET', '/api/office');
     assert.equal(status, 200);
     assert.equal(data.agents.length, 5);
+    assert.ok(data.templates.some((t) => t.role === 'SEO'));
     assert.equal(data.providers.find((p) => p.id === 'anthropic').configured, true);
     assert.ok(!JSON.stringify(data).includes('secret-value'));
   });

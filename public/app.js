@@ -84,6 +84,10 @@ function openAgent(agent) {
   const f = $('#agent-form');
   $('#agent-title').textContent = agent ? `${agent.name}'s desk` : 'Hire an agent';
   $('#agent-delete').hidden = !agent;
+  $('#template-row').hidden = Boolean(agent);
+  $('#agent-template').innerHTML =
+    '<option value="">Blank agent</option>' +
+    (office.templates ?? []).map((t, i) => `<option value="${i}">${esc(t.emoji)} ${esc(t.role)}</option>`).join('');
   const values = agent ?? { emoji: '🤖', name: '', role: '', provider: 'demo', model: '', instructions: '' };
   for (const k of ['emoji', 'name', 'role', 'provider', 'model', 'instructions']) f.elements[k].value = values[k] ?? '';
   $('#agent-dialog').showModal();
@@ -140,6 +144,12 @@ $('#agent-dialog').addEventListener('close', async () => {
   } catch (err) {
     alert(err.message);
   }
+});
+
+$('#agent-template').addEventListener('change', (e) => {
+  const t = office.templates?.[e.target.value];
+  const f = $('#agent-form');
+  for (const k of ['emoji', 'name', 'role', 'instructions']) f.elements[k].value = t ? t[k] : k === 'emoji' ? '🤖' : '';
 });
 
 $('#copy-output').addEventListener('click', () => navigator.clipboard?.writeText($('#output-body').textContent));
