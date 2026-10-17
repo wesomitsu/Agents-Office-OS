@@ -6,6 +6,7 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 let office = { agents: [], tasks: [], providers: [], company: {} };
 let editingAgent = null;
 let lastJson = '';
+let filter = '';
 
 async function api(method, path, body) {
   const res = await fetch(path, { method, headers: { 'Content-Type': 'application/json' }, body: body && JSON.stringify(body) });
@@ -52,12 +53,17 @@ function render() {
       .join('') + `<button class="desk add" id="add-agent">+ Hire an agent</button>`;
 
   for (const col of document.querySelectorAll('.col')) {
-    const list = tasks.filter((t) => t.status === col.dataset.status);
+    const list = tasks.filter((t) => t.status === col.dataset.status && (!filter || t.agentId === filter));
     $('.count', col).textContent = list.length || '';
     $('.list', col).innerHTML = list.length
       ? list.map(card).join('')
       : `<div class="empty">${{ todo: 'Nothing waiting', working: 'Everyone is free', done: 'No finished work yet', failed: 'All good' }[col.dataset.status]}</div>`;
   }
+
+  const f = $('#filter');
+  f.innerHTML = '<option value="">Everyone</option>' + agents.map((a) => `<option value="${esc(a.id)}">${esc(a.emoji)} ${esc(a.name)}</option>`).join('');
+  if (!agents.some((a) => a.id === filter)) filter = '';
+  f.value = filter;
 
   // Don't touch the form lists while someone is filling a form in.
   if (document.querySelector('dialog[open]')) return;
@@ -148,6 +154,11 @@ $('#agent-dialog').addEventListener('close', async () => {
   } catch (err) {
     alert(err.message);
   }
+});
+
+$('#filter').addEventListener('change', (e) => {
+  filter = e.target.value;
+  render();
 });
 
 $('#agent-template').addEventListener('change', (e) => {
