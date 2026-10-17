@@ -172,6 +172,27 @@ $('#agent-dialog').addEventListener('close', async () => {
   }
 });
 
+$('#export-team').addEventListener('click', async () => {
+  const data = await api('GET', '/api/export');
+  const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+  Object.assign(document.createElement('a'), { href: url, download: 'agents-office-team.json' }).click();
+  URL.revokeObjectURL(url);
+});
+
+$('#import-team').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  try {
+    const data = JSON.parse(await file.text());
+    if (!confirm(`Replace your current agents with the ${data.agents?.length ?? 0} in this file? Tasks are kept.`)) return;
+    await api('POST', '/api/import', data);
+    await refresh();
+  } catch (err) {
+    alert(`Couldn't import: ${err.message}`);
+  }
+});
+
 $('#filter').addEventListener('change', (e) => {
   filter = e.target.value;
   render();
