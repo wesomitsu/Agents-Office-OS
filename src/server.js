@@ -134,6 +134,9 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   // Bind to localhost only: the office can spend your API credit, so it
   // shouldn't be reachable from your network unless you put auth in front.
   const host = process.env.HOST ?? '127.0.0.1';
+  if (!['127.0.0.1', 'localhost', '::1'].includes(host) && !process.env.OFFICE_PASSWORD) {
+    console.warn('Warning: the office is reachable from other machines without a password. Set OFFICE_PASSWORD.');
+  }
   createServer(createApp({ store, runner })).listen(port, host, () => {
     console.log(`Agents Office OS is open at http://${host === '127.0.0.1' ? 'localhost' : host}:${port}`);
   });
