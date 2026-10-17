@@ -64,6 +64,10 @@ Click a desk to rename an agent, change its emoji, job, provider, model or
 instructions. Click **+ Hire an agent** to add someone new, blank or from a template: SEO,
 Sales, Content Writer, Data Analyst or HR & Hiring.
 
+Use **Export team** to save your agents (names, jobs, providers, models and
+instructions; never keys) to a file, and **Import team** to load them on another
+machine or share a setup.
+
 Set `COMPANY_NAME` and `COMPANY_ABOUT` in `.env` and every agent knows who they
 work for.
 
@@ -85,6 +89,7 @@ work for.
 | `POST` | `/api/tasks/:id/handoff` | Pass a finished result to another agent `{ agentId, note, run }` |
 | `POST` | `/api/tasks/:id/reply` | Send a follow-up `{ message }` on a finished task |
 | `PATCH`/`DELETE` | `/api/tasks/:id` | Edit or delete a task |
+| `GET`/`POST` | `/api/export`, `/api/import` | Save or load the team `{ agents }` |
 | `POST` | `/api/agents` | Hire an agent |
 | `PATCH`/`DELETE` | `/api/agents/:id` | Edit or remove an agent |
 

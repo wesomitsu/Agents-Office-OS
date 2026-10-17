@@ -38,3 +38,15 @@ test('tasks belong to an agent and move through statuses', () => {
   assert.throws(() => store.addTask({ title: 'x', agentId: 'ghost' }), /unknown agent/);
   assert.ok(store.removeTask(t.id));
 });
+
+test('imports a team, validating each agent', () => {
+  const store = createStore(tmpFile());
+  assert.throws(() => store.importAgents([]), /non-empty/);
+  assert.throws(() => store.importAgents([{ name: 'x' }]), /agent 1 needs a name and role/);
+  assert.throws(() => store.importAgents([{ id: 'a', name: 'A', role: 'R' }, { id: 'a', name: 'B', role: 'R' }]), /unique/);
+  const team = store.importAgents([{ id: 'seo', name: 'Scout', role: 'SEO', apiKey: 'nope' }, { id: '../bad', name: 'Q', role: 'Writer' }]);
+  assert.equal(team[0].id, 'seo');
+  assert.equal(team[0].apiKey, undefined);
+  assert.notEqual(team[1].id, '../bad');
+  assert.equal(store.agents().length, 2);
+});

@@ -90,3 +90,14 @@ test('hands a finished task to another agent', async () => {
     assert.equal((await api('POST', '/api/tasks/nope/handoff', { agentId: 'social' })).status, 404);
   });
 });
+
+test('exports the team and imports it back', async () => {
+  await withServer(async (api) => {
+    const exported = (await api('GET', '/api/export')).data;
+    assert.equal(exported.agents.length, 5);
+    assert.equal(exported.tasks, undefined);
+    exported.agents.pop();
+    assert.equal((await api('POST', '/api/import', exported)).data.agents.length, 4);
+    assert.equal((await api('POST', '/api/import', { agents: 'nope' })).status, 400);
+  });
+});

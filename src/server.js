@@ -17,6 +17,8 @@ export function createApp({ store, runner, env = process.env }) {
 
   const routes = [
     ['GET', /^\/api\/office$/, () => ({ company, providers: providerStatus(env), templates: AGENT_TEMPLATES, agents: store.agents(), stats: store.stats(), tasks: store.tasks() })],
+    ['GET', /^\/api\/export$/, () => ({ app: 'agents-office-os', version: 1, agents: store.agents() })],
+    ['POST', /^\/api\/import$/, (_, body) => ({ agents: store.importAgents(body.agents) })],
     ['POST', /^\/api\/agents$/, (_, body) => [201, store.addAgent(body)]],
     ['PATCH', /^\/api\/agents\/([\w-]+)$/, ([id], body) => store.updateAgent(id, body)],
     ['DELETE', /^\/api\/agents\/([\w-]+)$/, ([id]) => (store.removeAgent(id) ? { ok: true } : null)],
