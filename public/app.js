@@ -1,3 +1,5 @@
+import { renderMarkdown } from './markdown.js';
+
 const $ = (s, el = document) => el.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
@@ -105,7 +107,8 @@ document.addEventListener('click', async (e) => {
     if (t.dataset.view) {
       const task = office.tasks.find((x) => x.id === t.dataset.view);
       $('#output-title').textContent = task.title;
-      $('#output-body').textContent = task.output;
+      $('#output-body').innerHTML = renderMarkdown(task.output);
+      $('#output-body').dataset.raw = task.output;
       return $('#output-dialog').showModal();
     }
     await refresh();
@@ -152,7 +155,7 @@ $('#agent-template').addEventListener('change', (e) => {
   for (const k of ['emoji', 'name', 'role', 'instructions']) f.elements[k].value = t ? t[k] : k === 'emoji' ? '🤖' : '';
 });
 
-$('#copy-output').addEventListener('click', () => navigator.clipboard?.writeText($('#output-body').textContent));
+$('#copy-output').addEventListener('click', () => navigator.clipboard?.writeText($('#output-body').dataset.raw ?? ''));
 
 const tick = () => ($('#clock').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
 tick();
