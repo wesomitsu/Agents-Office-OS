@@ -39,3 +39,20 @@ test('marks failures and blocks double runs', async () => {
   assert.equal(result.status, 'failed');
   assert.equal(result.error, 'timeout');
 });
+
+test('records timings and per-agent stats', async () => {
+  const s = store();
+  const a = s.addTask({ title: 'Post 1', agentId: 'social' });
+  const b = s.addTask({ title: 'Post 2', agentId: 'social' });
+  const c = s.addTask({ title: 'Bug', agentId: 'bugs' });
+  const runner = createRunner(s, { complete: async ({ prompt }) => { if (prompt === 'Bug') throw new Error('no'); return 'ok'; } });
+  await runner.run(a.id);
+  await runner.run(b.id);
+  await runner.run(c.id);
+  assert.ok(s.task(a.id).startedAt && s.task(a.id).finishedAt);
+  const stats = s.stats();
+  assert.equal(stats.social.done, 2);
+  assert.equal(typeof stats.social.avgSeconds, 'number');
+  assert.deepEqual(stats.bugs, { done: 0, failed: 1, avgSeconds: null });
+  assert.deepEqual(stats.support, { done: 0, failed: 0, avgSeconds: null });
+});
