@@ -32,6 +32,18 @@ export function createApp({ store, runner, env = process.env }) {
         return [202, store.task(id)];
       },
     ],
+    [
+      'POST',
+      /^\/api\/tasks\/([\w-]+)\/reply$/,
+      ([id], body) => {
+        const t = store.task(id);
+        if (!t) return null;
+        if (!String(body.message ?? '').trim()) throw new Error('message is required');
+        if (t.status !== 'done' || !t.thread?.length) throw new Error('you can reply once the task is done');
+        runner.reply(id, body.message).catch(() => {});
+        return [202, store.task(id)];
+      },
+    ],
   ];
 
   return async function handle(req, res) {
