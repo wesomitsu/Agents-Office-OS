@@ -76,3 +76,17 @@ test('OFFICE_PASSWORD puts the whole office behind a login', async () => {
     assert.equal((await fetch(`${base}/api/office`, { headers: good })).status, 200);
   }, { OFFICE_PASSWORD: 's3cret:pw' });
 });
+
+test('hands a finished task to another agent', async () => {
+  await withServer(async (api) => {
+    const t = (await api('POST', '/api/tasks', { title: 'Spring campaign', agentId: 'marketing' })).data;
+    assert.equal((await api('POST', `/api/tasks/${t.id}/handoff`, { agentId: 'social' })).status, 400);
+    await api('POST', `/api/tasks/${t.id}/run`);
+    await new Promise((r) => setTimeout(r, 20));
+    const h = await api('POST', `/api/tasks/${t.id}/handoff`, { agentId: 'social', note: 'Turn this into 3 posts' });
+    assert.equal(h.status, 201);
+    assert.equal(h.data.agentId, 'social');
+    assert.match(h.data.details, /^Turn this into 3 posts\n\nWork from Max \(Marketing\):\n\nAll done$/);
+    assert.equal((await api('POST', '/api/tasks/nope/handoff', { agentId: 'social' })).status, 404);
+  });
+});
