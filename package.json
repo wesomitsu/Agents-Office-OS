@@ -1,0 +1,14 @@
+{
+  "name": "agents-office-os",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A small office where AI agents each own a job: social media, marketing, website edits, bug fixes and support.",
+  "type": "module",
+  "scripts": {
+    "start": "node --env-file-if-exists=.env src/server.js",
+    "test": "node --test"
+  },
+  "engines": { "node": ">=22" },
+  "author": "wesomitsu",
+  "license": "MIT"
+}
