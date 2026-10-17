@@ -83,6 +83,18 @@ export function createStore(path) {
       save();
     },
 
+    // Passes a finished task's result to another agent as a new task.
+    handoff(id, { agentId, note = '' }) {
+      const from = state.tasks.find((x) => x.id === id);
+      if (!from) return null;
+      if (from.status !== 'done') throw new Error('only finished tasks can be handed off');
+      const fromAgent = agent(from.agentId);
+      const details = [note && String(note).trim(), `Work from ${fromAgent?.name ?? 'a teammate'} (${fromAgent?.role ?? 'agent'}):\n\n${from.output}`]
+        .filter(Boolean)
+        .join('\n\n');
+      return this.addTask({ title: from.title, details, agentId });
+    },
+
     // The conversation for a task: the request, the agent's answer, then any follow-ups.
     setThread(id, thread) {
       const t = state.tasks.find((x) => x.id === id);

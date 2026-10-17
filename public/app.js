@@ -125,6 +125,11 @@ document.addEventListener('click', async (e) => {
         .join('<hr>');
       $('#output-body').dataset.id = task.id;
       $('#reply-text').value = '';
+      $('#handoff-note').value = '';
+      $('#handoff-agent').innerHTML = office.agents
+        .filter((a) => a.id !== task.agentId)
+        .map((a) => `<option value="${esc(a.id)}">${esc(a.emoji)} ${esc(a.name)} · ${esc(a.role)}</option>`)
+        .join('');
       $('#output-body').dataset.raw = task.output;
       $('#output-body').dataset.title = task.title;
       return $('#output-dialog').showModal();
@@ -185,6 +190,16 @@ $('#download-output').addEventListener('click', () => {
   const a = Object.assign(document.createElement('a'), { href: url, download: `${name}.md` });
   a.click();
   URL.revokeObjectURL(url);
+});
+
+$('#handoff-btn').addEventListener('click', async () => {
+  try {
+    await api('POST', `/api/tasks/${$('#output-body').dataset.id}/handoff`, { agentId: $('#handoff-agent').value, note: $('#handoff-note').value, run: true });
+    $('#output-dialog').close('handoff');
+    await refresh();
+  } catch (err) {
+    alert(err.message);
+  }
 });
 
 $('#output-dialog').addEventListener('close', async () => {

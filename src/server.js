@@ -34,6 +34,16 @@ export function createApp({ store, runner, env = process.env }) {
     ],
     [
       'POST',
+      /^\/api\/tasks\/([\w-]+)\/handoff$/,
+      ([id], body) => {
+        const created = store.handoff(id, body);
+        if (!created) return null;
+        if (body.run) runner.run(created.id).catch(() => {});
+        return [201, created];
+      },
+    ],
+    [
+      'POST',
       /^\/api\/tasks\/([\w-]+)\/reply$/,
       ([id], body) => {
         const t = store.task(id);
