@@ -4,6 +4,7 @@ import { timingSafeEqual } from 'node:crypto';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { AGENT_TEMPLATES } from './defaults.js';
+import { createNotifier } from './notify.js';
 import { providerStatus } from './providers.js';
 import { createRunner } from './runner.js';
 import { createStore } from './store.js';
@@ -129,7 +130,10 @@ async function serveStatic(pathname, res) {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const store = createStore(process.env.OFFICE_DATA ?? join(root, 'data', 'office.json'));
-  const runner = createRunner(store, { company: { name: process.env.COMPANY_NAME, about: process.env.COMPANY_ABOUT } });
+  const runner = createRunner(store, {
+    company: { name: process.env.COMPANY_NAME, about: process.env.COMPANY_ABOUT },
+    notify: createNotifier(),
+  });
   const port = Number(process.env.PORT ?? 3000);
   // Bind to localhost only: the office can spend your API credit, so it
   // shouldn't be reachable from your network unless you put auth in front.

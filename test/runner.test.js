@@ -87,3 +87,12 @@ test('a failed follow-up keeps the earlier answer', async () => {
   assert.equal(r.output, 'first');
   assert.match(r.error, /Follow-up failed: rate limited/);
 });
+
+test('notifies when a task finishes', async () => {
+  const s = store();
+  const t = s.addTask({ title: 'Ping', agentId: 'support' });
+  const seen = [];
+  const runner = createRunner(s, { complete: async () => ({ text: 'pong', usage: { input: 0, output: 0 } }), notify: async (task, agent) => seen.push([task.status, agent.name]) });
+  await runner.run(t.id);
+  assert.deepEqual(seen, [['done', 'Sage']]);
+});
