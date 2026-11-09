@@ -28,6 +28,7 @@
 
     <div class="board-bar">
       <h2>Tasks</h2>
+      <label class="filter">Search <input id="search" type="search" placeholder="Find a task…"></label>
       <label class="filter">Show <select id="filter"><option value="">Everyone</option></select></label>
     </div>
     <section class="board" aria-label="Task board">
@@ -40,7 +41,7 @@
 
   <footer class="footer">
     <button class="linkish" onclick="document.getElementById('keys').hidden = !document.getElementById('keys').hidden">Keyboard shortcuts (?)</button>
-    <div id="keys" hidden><kbd>n</kbd> new task · <kbd>h</kbd> hire an agent · <kbd>f</kbd> filter · <kbd>1</kbd>–<kbd>9</kbd> one agent's tasks · <kbd>0</kbd> everyone · <kbd>Esc</kbd> close</div>
+    <div id="keys" hidden><kbd>n</kbd> new task · <kbd>h</kbd> hire an agent · <kbd>f</kbd> filter · <kbd>/</kbd> search · <kbd>1</kbd>–<kbd>9</kbd> one agent's tasks · <kbd>0</kbd> everyone · <kbd>Esc</kbd> close</div>
   </footer>
 
   <dialog id="task-dialog">
