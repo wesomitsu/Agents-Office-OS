@@ -9,7 +9,7 @@ them work, and read what they hand back.
 - **Five agents ready to go**, each with its own instructions, and you can hire more
 - **Bring any AI**: Anthropic (Claude), any OpenAI-compatible API (OpenAI, OpenRouter, Groq, Together, a local Ollama), or the built-in demo
 - **One model per agent**: put your support agent on a fast, cheap model and your bug fixer on a strong one
-- **Task board**: to do, working, done and needs attention, updated live
+- **Task board**: to do, working, done and needs attention, updated live, with high-priority tasks on top
 - **Readable results**: formatted output you can copy or download as Markdown
 - **Follow-ups**: reply to a finished task ("make it shorter") and the agent revises it, keeping the conversation
 - **Hand-offs**: pass a result to another agent, e.g. Marketing's campaign to Social Media for posts
@@ -104,7 +104,7 @@ work for.
 | Method | Path | What it does |
 |---|---|---|
 | `GET` | `/api/office` | Agents, tasks and provider status |
-| `POST` | `/api/tasks` | Create a task `{ title, details, agentId }` |
+| `POST` | `/api/tasks` | Create a task `{ title, details, agentId, priority }` (`high`, `normal` or `low`) |
 | `POST` | `/api/tasks/:id/run` | Start (or redo) a task |
 | `POST` | `/api/tasks/:id/handoff` | Pass a finished result to another agent `{ agentId, note, run }` |
 | `POST` | `/api/tasks/:id/reply` | Send a follow-up `{ message }` on a finished task |

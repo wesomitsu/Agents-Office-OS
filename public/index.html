@@ -48,7 +48,10 @@
       <h3>New task</h3>
       <label>Title<input name="title" required placeholder="Write a launch post for our new feature"></label>
       <label>Details<textarea name="details" rows="4" placeholder="Anything the agent should know"></textarea></label>
-      <label>Assign to<select name="agentId" id="task-agent"></select></label>
+      <div class="row">
+        <label>Assign to<select name="agentId" id="task-agent"></select></label>
+        <label class="small-select">Priority<select name="priority"><option value="high">🔴 High</option><option value="normal" selected>Normal</option><option value="low">Low</option></select></label>
+      </div>
       <label class="check"><input type="checkbox" name="run" checked> Start right away</label>
       <div class="actions"><button value="cancel" class="btn" formnovalidate>Cancel</button><button value="ok" class="btn primary">Create</button></div>
     </form>
