@@ -7,6 +7,8 @@ let office = { agents: [], tasks: [], providers: [], company: {} };
 let editingAgent = null;
 let lastJson = '';
 let filter = '';
+let search = '';
+const matches = (t) => !search || `${t.title}\n${t.details}\n${t.output}`.toLowerCase().includes(search);
 
 async function api(method, path, body) {
   const res = await fetch(path, { method, headers: { 'Content-Type': 'application/json' }, body: body && JSON.stringify(body) });
@@ -57,7 +59,7 @@ function render() {
 
   for (const col of document.querySelectorAll('.col')) {
     const list = tasks
-      .filter((t) => t.status === col.dataset.status && (!filter || t.agentId === filter))
+      .filter((t) => t.status === col.dataset.status && (!filter || t.agentId === filter) && matches(t))
       .sort((a, b) => (RANK[a.priority] ?? 1) - (RANK[b.priority] ?? 1));
     $('.count', col).textContent = list.length || '';
     $('.list', col).innerHTML = list.length
@@ -154,6 +156,9 @@ document.addEventListener('keydown', (e) => {
   } else if (e.key === 'h') {
     e.preventDefault();
     openAgent(null);
+  } else if (e.key === '/') {
+    e.preventDefault();
+    $('#search').focus();
   } else if (e.key === 'f') {
     e.preventDefault();
     $('#filter').focus();
@@ -216,6 +221,11 @@ $('#import-team').addEventListener('change', async (e) => {
   } catch (err) {
     alert(`Couldn't import: ${err.message}`);
   }
+});
+
+$('#search').addEventListener('input', (e) => {
+  search = e.target.value.trim().toLowerCase();
+  render();
 });
 
 $('#filter').addEventListener('change', (e) => {
