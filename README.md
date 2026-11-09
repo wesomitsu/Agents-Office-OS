@@ -78,6 +78,10 @@ Use **Export team** to save your agents (names, jobs, providers, models and
 instructions; never keys) to a file, and **Import team** to load them on another
 machine or share a setup.
 
+Set `NOTIFY_WEBHOOK_URL` to a Slack or Discord incoming-webhook URL and the
+office posts a message (with a preview of the result) whenever a task finishes
+or fails.
+
 Set `COMPANY_NAME` and `COMPANY_ABOUT` in `.env` and every agent knows who they
 work for.
 

@@ -9,7 +9,7 @@ export function buildPrompt(agent, task, company = {}) {
   return { system, prompt };
 }
 
-export function createRunner(store, { complete: call = complete, company = {} } = {}) {
+export function createRunner(store, { complete: call = complete, company = {}, notify = async () => {} } = {}) {
   const running = new Set();
 
   return {
@@ -37,6 +37,7 @@ export function createRunner(store, { complete: call = complete, company = {} } 
         return store.updateTask(taskId, { status: 'failed', error: err.message, finishedAt: new Date().toISOString() });
       } finally {
         running.delete(taskId);
+        notify(store.task(taskId), agent).catch(() => {});
       }
     },
 
