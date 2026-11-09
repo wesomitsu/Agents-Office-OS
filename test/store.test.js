@@ -50,3 +50,13 @@ test('imports a team, validating each agent', () => {
   assert.notEqual(team[1].id, '../bad');
   assert.equal(store.agents().length, 2);
 });
+
+test('tasks have a priority', () => {
+  const store = createStore(tmpFile());
+  assert.equal(store.addTask({ title: 'a', agentId: 'support' }).priority, 'normal');
+  const t = store.addTask({ title: 'b', agentId: 'support', priority: 'high' });
+  assert.equal(t.priority, 'high');
+  assert.equal(store.updateTask(t.id, { priority: 'low' }).priority, 'low');
+  assert.throws(() => store.addTask({ title: 'c', agentId: 'support', priority: 'urgent!!' }), /bad priority/);
+  assert.throws(() => store.updateTask(t.id, { priority: 'x' }), /bad priority/);
+});
