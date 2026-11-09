@@ -88,6 +88,7 @@ work for.
 | `n` | New task |
 | `h` | Hire an agent |
 | `f` | Jump to the board filter |
+| `/` | Search tasks (title, details and results) |
 | `1`–`9` | Show one agent's tasks (`0` for everyone) |
 | `?` | Show the shortcuts |
 
