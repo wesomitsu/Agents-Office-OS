@@ -5,6 +5,7 @@ import { DEFAULT_AGENTS } from './defaults.js';
 
 const AGENT_FIELDS = ['name', 'role', 'emoji', 'provider', 'model', 'instructions'];
 const STATUSES = new Set(['todo', 'working', 'done', 'failed']);
+const PRIORITIES = new Set(['high', 'normal', 'low']);
 
 // Keeps the office (agents + tasks) in one JSON file. API keys are never stored here.
 export function createStore(path) {
@@ -71,7 +72,8 @@ export function createStore(path) {
     tasks: () => state.tasks,
     task: (id) => state.tasks.find((t) => t.id === id),
 
-    addTask({ title, details = '', agentId }) {
+    addTask({ title, details = '', agentId, priority = 'normal' }) {
+      if (!PRIORITIES.has(priority)) throw new Error(`bad priority "${priority}"`);
       if (!title) throw new Error('title is required');
       if (!agent(agentId)) throw new Error(`unknown agent "${agentId}"`);
       const t = {
@@ -79,6 +81,7 @@ export function createStore(path) {
         title: String(title),
         details: String(details),
         agentId,
+        priority,
         status: 'todo',
         output: '',
         error: '',
@@ -123,7 +126,8 @@ export function createStore(path) {
       const t = state.tasks.find((x) => x.id === id);
       if (!t) return null;
       if (changes.status && !STATUSES.has(changes.status)) throw new Error(`bad status "${changes.status}"`);
-      for (const k of ['status', 'output', 'error', 'title', 'details', 'startedAt', 'finishedAt']) if (k in changes) t[k] = String(changes[k]);
+      if (changes.priority && !PRIORITIES.has(changes.priority)) throw new Error(`bad priority "${changes.priority}"`);
+      for (const k of ['status', 'priority', 'output', 'error', 'title', 'details', 'startedAt', 'finishedAt']) if (k in changes) t[k] = String(changes[k]);
       t.updatedAt = new Date().toISOString();
       save();
       return t;
