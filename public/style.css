@@ -98,6 +98,7 @@ main { padding: 0 24px 40px; display: grid; gap: 20px; }
 @media (max-width: 900px) { .board { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 560px) { .board { grid-template-columns: 1fr; } main, .topbar { padding-left: 16px; padding-right: 16px; } }
 .col { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 12px; min-height: 140px; }
+.col h2 .linkish { font-size: 12px; text-transform: none; letter-spacing: 0; margin-left: auto; padding-left: 8px; }
 .col h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 2px 4px 10px; display: flex; justify-content: space-between; }
 .list { display: grid; gap: 8px; }
 .card { border: 1px solid var(--line); border-radius: 12px; padding: 10px; background: var(--bg); animation: in .35s both; }

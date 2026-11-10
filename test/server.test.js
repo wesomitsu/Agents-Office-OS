@@ -101,3 +101,20 @@ test('exports the team and imports it back', async () => {
     assert.equal((await api('POST', '/api/import', { agents: 'nope' })).status, 400);
   });
 });
+
+test('clears finished tasks, optionally for one agent', async () => {
+  await withServer(async (api) => {
+    const ids = [];
+    for (const agentId of ['social', 'social', 'bugs']) {
+      const t = (await api('POST', '/api/tasks', { title: 'x', agentId })).data;
+      await api('POST', `/api/tasks/${t.id}/run`);
+      ids.push(t.id);
+    }
+    await api('POST', '/api/tasks', { title: 'still to do', agentId: 'social' });
+    await new Promise((r) => setTimeout(r, 30));
+    assert.equal((await api('POST', '/api/tasks/clear-done', { agentId: 'bugs' })).data.removed, 1);
+    assert.equal((await api('POST', '/api/tasks/clear-done', {})).data.removed, 2);
+    const left = (await api('GET', '/api/office')).data.tasks;
+    assert.deepEqual(left.map((t) => t.title), ['still to do']);
+  });
+});

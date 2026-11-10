@@ -161,6 +161,14 @@ export function createStore(path) {
       return out;
     },
 
+    // Deletes every finished task (optionally just one agent's) and says how many.
+    clearDone(agentId) {
+      const before = state.tasks.length;
+      state.tasks = state.tasks.filter((t) => t.status !== 'done' || (agentId && t.agentId !== agentId));
+      save();
+      return before - state.tasks.length;
+    },
+
     removeTask(id) {
       const before = state.tasks.length;
       state.tasks = state.tasks.filter((t) => t.id !== id);
