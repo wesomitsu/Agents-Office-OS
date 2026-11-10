@@ -7,6 +7,13 @@ const AGENT_FIELDS = ['name', 'role', 'emoji', 'provider', 'model', 'instruction
 const STATUSES = new Set(['todo', 'working', 'done', 'failed']);
 const PRIORITIES = new Set(['high', 'normal', 'low']);
 
+// Due dates are plain calendar days (YYYY-MM-DD) or empty.
+function checkDue(due) {
+  const d = String(due ?? '').trim();
+  if (d && !(/^\d{4}-\d{2}-\d{2}$/.test(d) && !Number.isNaN(Date.parse(d)))) throw new Error(`bad due date "${d}" (use YYYY-MM-DD)`);
+  return d;
+}
+
 // Keeps the office (agents + tasks) in one JSON file. API keys are never stored here.
 export function createStore(path) {
   let state;
@@ -72,7 +79,8 @@ export function createStore(path) {
     tasks: () => state.tasks,
     task: (id) => state.tasks.find((t) => t.id === id),
 
-    addTask({ title, details = '', agentId, priority = 'normal' }) {
+    addTask({ title, details = '', agentId, priority = 'normal', due = '' }) {
+      due = checkDue(due);
       if (!PRIORITIES.has(priority)) throw new Error(`bad priority "${priority}"`);
       if (!title) throw new Error('title is required');
       if (!agent(agentId)) throw new Error(`unknown agent "${agentId}"`);
@@ -82,6 +90,7 @@ export function createStore(path) {
         details: String(details),
         agentId,
         priority,
+        due,
         status: 'todo',
         output: '',
         error: '',
@@ -126,8 +135,9 @@ export function createStore(path) {
       const t = state.tasks.find((x) => x.id === id);
       if (!t) return null;
       if (changes.status && !STATUSES.has(changes.status)) throw new Error(`bad status "${changes.status}"`);
+      if ('due' in changes) changes = { ...changes, due: checkDue(changes.due) };
       if (changes.priority && !PRIORITIES.has(changes.priority)) throw new Error(`bad priority "${changes.priority}"`);
-      for (const k of ['status', 'priority', 'output', 'error', 'title', 'details', 'startedAt', 'finishedAt']) if (k in changes) t[k] = String(changes[k]);
+      for (const k of ['status', 'priority', 'due', 'output', 'error', 'title', 'details', 'startedAt', 'finishedAt']) if (k in changes) t[k] = String(changes[k]);
       t.updatedAt = new Date().toISOString();
       save();
       return t;

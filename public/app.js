@@ -60,7 +60,7 @@ function render() {
   for (const col of document.querySelectorAll('.col')) {
     const list = tasks
       .filter((t) => t.status === col.dataset.status && (!filter || t.agentId === filter) && matches(t))
-      .sort((a, b) => (RANK[a.priority] ?? 1) - (RANK[b.priority] ?? 1));
+      .sort((a, b) => (RANK[a.priority] ?? 1) - (RANK[b.priority] ?? 1) || (a.due || '9999').localeCompare(b.due || '9999'));
     $('.count', col).textContent = list.length || '';
     $('.list', col).innerHTML = list.length
       ? list.map(card).join('')
@@ -79,6 +79,14 @@ function render() {
 }
 
 const RANK = { high: 0, normal: 1, low: 2 };
+const today = () => new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD in local time
+function dueLabel(t) {
+  if (!t.due) return '';
+  const open = t.status === 'todo' || t.status === 'working';
+  const late = open && t.due < today();
+  const when = t.due === today() ? 'today' : new Date(`${t.due}T00:00`).toLocaleDateString([], { month: 'short', day: 'numeric' });
+  return `<div class="due${late ? ' late' : ''}">${late ? 'Overdue · ' : 'Due '}${esc(when)}</div>`;
+}
 const fmtTokens = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n));
 
 function card(t) {
@@ -92,6 +100,7 @@ function card(t) {
   return `<div class="card">
     <div class="who">${esc(a?.emoji ?? '❔')} ${esc(a?.name ?? 'Removed agent')}${t.priority === 'high' ? ' <span class="prio high">High</span>' : t.priority === 'low' ? ' <span class="prio low">Low</span>' : ''}</div>
     <div class="title">${esc(t.title)}</div>
+    ${dueLabel(t)}
     ${t.usage && t.usage.input + t.usage.output ? `<div class="tokens">${fmtTokens(t.usage.input + t.usage.output)} tokens</div>` : ''}
     ${t.error ? `<div class="err">${esc(t.error)}</div>` : ''}
     <div class="buttons">${buttons}${t.status !== 'working' ? `<button class="btn small" data-delete="${t.id}" title="Delete">✕</button>` : ''}</div>
@@ -179,7 +188,7 @@ $('#task-dialog').addEventListener('close', async () => {
   const f = $('#task-form');
   if (d.returnValue === 'ok') {
     try {
-      const task = await api('POST', '/api/tasks', { title: f.elements.title.value, details: f.elements.details.value, agentId: f.elements.agentId.value, priority: f.elements.priority.value });
+      const task = await api('POST', '/api/tasks', { title: f.elements.title.value, details: f.elements.details.value, agentId: f.elements.agentId.value, priority: f.elements.priority.value, due: f.elements.due.value });
       if (f.elements.run.checked) await api('POST', `/api/tasks/${task.id}/run`);
       f.reset();
       await refresh();
