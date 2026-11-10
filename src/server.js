@@ -25,6 +25,7 @@ export function createApp({ store, runner, env = process.env }) {
     ['DELETE', /^\/api\/agents\/([\w-]+)$/, ([id]) => (store.removeAgent(id) ? { ok: true } : null)],
     ['POST', /^\/api\/tasks$/, (_, body) => [201, store.addTask(body)]],
     ['PATCH', /^\/api\/tasks\/([\w-]+)$/, ([id], body) => store.updateTask(id, body)],
+    ['POST', /^\/api\/tasks\/clear-done$/, (_, body) => ({ removed: store.clearDone(body.agentId || undefined) })],
     ['DELETE', /^\/api\/tasks\/([\w-]+)$/, ([id]) => (store.removeTask(id) ? { ok: true } : null)],
     [
       'POST',
