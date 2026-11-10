@@ -232,6 +232,18 @@ $('#import-team').addEventListener('change', async (e) => {
   }
 });
 
+$('#clear-done').addEventListener('click', async () => {
+  const who = filter ? office.agents.find((a) => a.id === filter)?.name : null;
+  const count = office.tasks.filter((t) => t.status === 'done' && (!filter || t.agentId === filter)).length;
+  if (!count || !confirm(`Delete ${count} finished task${count === 1 ? '' : 's'}${who ? ` for ${who}` : ''}? Download anything you want to keep first.`)) return;
+  try {
+    await api('POST', '/api/tasks/clear-done', { agentId: filter });
+    await refresh();
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
 $('#search').addEventListener('input', (e) => {
   search = e.target.value.trim().toLowerCase();
   render();

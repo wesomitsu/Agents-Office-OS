@@ -114,6 +114,7 @@ work for.
 | `POST` | `/api/tasks/:id/handoff` | Pass a finished result to another agent `{ agentId, note, run }` |
 | `POST` | `/api/tasks/:id/reply` | Send a follow-up `{ message }` on a finished task |
 | `PATCH`/`DELETE` | `/api/tasks/:id` | Edit or delete a task |
+| `POST` | `/api/tasks/clear-done` | Delete finished tasks `{ agentId? }` |
 | `GET`/`POST` | `/api/export`, `/api/import` | Save or load the team `{ agents }` |
 | `POST` | `/api/agents` | Hire an agent |
 | `PATCH`/`DELETE` | `/api/agents/:id` | Edit or remove an agent |
