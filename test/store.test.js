@@ -60,3 +60,13 @@ test('tasks have a priority', () => {
   assert.throws(() => store.addTask({ title: 'c', agentId: 'support', priority: 'urgent!!' }), /bad priority/);
   assert.throws(() => store.updateTask(t.id, { priority: 'x' }), /bad priority/);
 });
+
+test('tasks can have a due date', () => {
+  const store = createStore(tmpFile());
+  assert.equal(store.addTask({ title: 'a', agentId: 'support' }).due, '');
+  const t = store.addTask({ title: 'b', agentId: 'support', due: '2026-12-01' });
+  assert.equal(t.due, '2026-12-01');
+  assert.equal(store.updateTask(t.id, { due: '' }).due, '');
+  assert.throws(() => store.addTask({ title: 'c', agentId: 'support', due: 'tomorrow' }), /bad due date/);
+  assert.throws(() => store.updateTask(t.id, { due: '2026-13-45' }), /bad due date/);
+});
