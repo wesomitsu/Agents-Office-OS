@@ -54,8 +54,9 @@ test('records timings and per-agent stats', async () => {
   const stats = s.stats();
   assert.equal(stats.social.done, 2);
   assert.equal(typeof stats.social.avgSeconds, 'number');
-  assert.deepEqual(stats.bugs, { done: 0, failed: 1, avgSeconds: null });
-  assert.deepEqual(stats.support, { done: 0, failed: 0, avgSeconds: null });
+  assert.deepEqual(stats.bugs, { done: 0, failed: 1, avgSeconds: null, tokensIn: 0, tokensOut: 0, cost: null });
+  assert.deepEqual(stats.support, { done: 0, failed: 0, avgSeconds: null, tokensIn: 0, tokensOut: 0, cost: null });
+  assert.equal(stats.social.tokensIn, 2);
 });
 
 test('follow-ups send the whole conversation and keep the thread', async () => {
@@ -95,4 +96,16 @@ test('notifies when a task finishes', async () => {
   const runner = createRunner(s, { complete: async () => ({ text: 'pong', usage: { input: 0, output: 0 } }), notify: async (task, agent) => seen.push([task.status, agent.name]) });
   await runner.run(t.id);
   assert.deepEqual(seen, [['done', 'Sage']]);
+});
+
+test('estimates cost from token usage and agent prices', async () => {
+  const s = store();
+  s.updateAgent('bugs', { priceIn: '3', priceOut: '15' });
+  const t = s.addTask({ title: 'Fix', agentId: 'bugs' });
+  const runner = createRunner(s, { complete: async () => ({ text: 'ok', usage: { input: 100000, output: 20000 } }) });
+  await runner.run(t.id);
+  // 0.1M in * $3 + 0.02M out * $15 = $0.60
+  assert.equal(s.stats().bugs.cost, 0.6);
+  assert.equal(s.stats().support.cost, null);
+  assert.throws(() => s.updateAgent('bugs', { priceIn: 'cheap' }), /dollars per 1M tokens/);
 });

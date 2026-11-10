@@ -3,7 +3,7 @@ import { dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { DEFAULT_AGENTS } from './defaults.js';
 
-const AGENT_FIELDS = ['name', 'role', 'emoji', 'provider', 'model', 'instructions'];
+const AGENT_FIELDS = ['name', 'role', 'emoji', 'provider', 'model', 'instructions', 'priceIn', 'priceOut'];
 const STATUSES = new Set(['todo', 'working', 'done', 'failed']);
 const PRIORITIES = new Set(['high', 'normal', 'low']);
 
@@ -31,7 +31,14 @@ export function createStore(path) {
     renameSync(tmp, path); // write-then-rename so a crash never leaves half a file
   }
 
-  const pick = (input) => Object.fromEntries(AGENT_FIELDS.filter((k) => k in input).map((k) => [k, String(input[k])]));
+  const pick = (input) => {
+    const out = Object.fromEntries(AGENT_FIELDS.filter((k) => k in input).map((k) => [k, String(input[k] ?? '').trim()]));
+    // Prices are optional: US dollars per 1 million tokens, used only for cost estimates.
+    for (const k of ['priceIn', 'priceOut']) {
+      if (out[k] && !(/^\d+(\.\d+)?$/.test(out[k]) && Number(out[k]) <= 10000)) throw new Error(`${k} must be a number of dollars per 1M tokens`);
+    }
+    return out;
+  };
   const agent = (id) => state.agents.find((a) => a.id === id);
 
   return {
@@ -146,16 +153,24 @@ export function createStore(path) {
     // Per-agent counts and average run time for finished tasks.
     stats() {
       const out = {};
-      for (const a of state.agents) out[a.id] = { done: 0, failed: 0, avgSeconds: null };
+      for (const a of state.agents) out[a.id] = { done: 0, failed: 0, avgSeconds: null, tokensIn: 0, tokensOut: 0, cost: null };
       const totals = {};
       for (const t of state.tasks) {
         const s = out[t.agentId];
+        if (s && t.usage) {
+          s.tokensIn += t.usage.input;
+          s.tokensOut += t.usage.output;
+        }
         if (!s || (t.status !== 'done' && t.status !== 'failed')) continue;
         s[t.status]++;
         if (t.status === 'done' && t.startedAt && t.finishedAt) {
           const secs = (Date.parse(t.finishedAt) - Date.parse(t.startedAt)) / 1000;
           (totals[t.agentId] ??= []).push(secs);
         }
+      }
+      for (const a of state.agents) {
+        const s = out[a.id];
+        if (a.priceIn || a.priceOut) s.cost = Math.round(((s.tokensIn * Number(a.priceIn || 0) + s.tokensOut * Number(a.priceOut || 0)) / 1e6) * 10000) / 10000;
       }
       for (const [id, list] of Object.entries(totals)) out[id].avgSeconds = Math.round((list.reduce((a, b) => a + b, 0) / list.length) * 10) / 10;
       return out;

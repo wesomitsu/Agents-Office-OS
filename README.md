@@ -71,7 +71,9 @@ The header shows which providers are ready (●) and which still need a key (○
 | 💬 Sage | Customer support replies |
 
 Click a desk to rename an agent, change its emoji, job, provider, model or
-instructions. Click **+ Hire an agent** to add someone new, blank or from a template: SEO,
+instructions. Add the model's input and output prices ($ per 1M tokens, from your
+provider's pricing page) and the desk shows an estimate of what that agent has
+spent, based on the tokens its tasks used. Click **+ Hire an agent** to add someone new, blank or from a template: SEO,
 Sales, Content Writer, Data Analyst or HR & Hiring.
 
 Use **Export team** to save your agents (names, jobs, providers, models and
