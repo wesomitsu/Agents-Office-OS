@@ -22,6 +22,7 @@ async function refresh() {
   const json = JSON.stringify(next);
   if (json === lastJson) return; // nothing changed: don't redraw (keeps animations smooth)
   lastJson = json;
+  announceChanges(office.tasks, next.tasks);
   office = next;
   render();
 }
@@ -78,6 +79,21 @@ function render() {
   $('#task-agent').innerHTML = agents.map((a) => `<option value="${esc(a.id)}">${esc(a.emoji)} ${esc(a.name)} · ${esc(a.role)}</option>`).join('');
   $('#agent-provider').innerHTML = providers.map((p) => `<option value="${esc(p.id)}">${esc(p.label)}${p.configured ? '' : ' (no key yet)'}</option>`).join('');
 }
+
+// Tells screen-reader users when a task finishes or fails, since the board
+// updates on its own without a page reload.
+function announceChanges(before, after) {
+  if (!before.length) return;
+  const old = new Map(before.map((t) => [t.id, t.status]));
+  const notes = [];
+  for (const t of after) {
+    const was = old.get(t.id);
+    if (was === 'working' && t.status === 'done') notes.push(`${agentName(t.agentId)} finished "${t.title}".`);
+    if (was === 'working' && t.status === 'failed') notes.push(`${agentName(t.agentId)} couldn't finish "${t.title}".`);
+  }
+  if (notes.length) $('#announcer').textContent = notes.join(' ');
+}
+const agentName = (id) => office.agents.find((a) => a.id === id)?.name ?? 'An agent';
 
 const RANK = { high: 0, normal: 1, low: 2 };
 const today = () => new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD in local time
