@@ -6,6 +6,7 @@ import { DEFAULT_AGENTS } from './defaults.js';
 const AGENT_FIELDS = ['name', 'role', 'emoji', 'provider', 'model', 'instructions', 'priceIn', 'priceOut'];
 const STATUSES = new Set(['todo', 'working', 'done', 'failed']);
 const PRIORITIES = new Set(['high', 'normal', 'low']);
+const REPEATS = new Set(['', 'daily', 'weekly']);
 
 // Due dates are plain calendar days (YYYY-MM-DD) or empty.
 function checkDue(due) {
@@ -86,8 +87,9 @@ export function createStore(path) {
     tasks: () => state.tasks,
     task: (id) => state.tasks.find((t) => t.id === id),
 
-    addTask({ title, details = '', agentId, priority = 'normal', due = '' }) {
+    addTask({ title, details = '', agentId, priority = 'normal', due = '', repeat = '' }) {
       due = checkDue(due);
+      if (!REPEATS.has(repeat)) throw new Error(`bad repeat "${repeat}" (use daily or weekly)`);
       if (!PRIORITIES.has(priority)) throw new Error(`bad priority "${priority}"`);
       if (!title) throw new Error('title is required');
       if (!agent(agentId)) throw new Error(`unknown agent "${agentId}"`);
@@ -98,6 +100,7 @@ export function createStore(path) {
         agentId,
         priority,
         due,
+        repeat,
         status: 'todo',
         output: '',
         error: '',
@@ -182,6 +185,17 @@ export function createStore(path) {
       state.tasks = state.tasks.filter((t) => t.status !== 'done' || (agentId && t.agentId !== agentId));
       save();
       return before - state.tasks.length;
+    },
+
+    // When a repeating task is done, queue the next one (same request, next due date).
+    scheduleNext(id) {
+      const t = state.tasks.find((x) => x.id === id);
+      if (!t || t.status !== 'done' || !t.repeat || t.nextCreated) return null;
+      const days = t.repeat === 'weekly' ? 7 : 1;
+      const base = t.due ? new Date(`${t.due}T00:00:00Z`) : new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00Z');
+      base.setUTCDate(base.getUTCDate() + days);
+      t.nextCreated = true;
+      return this.addTask({ title: t.title, details: t.details, agentId: t.agentId, priority: t.priority, repeat: t.repeat, due: base.toISOString().slice(0, 10) });
     },
 
     removeTask(id) {

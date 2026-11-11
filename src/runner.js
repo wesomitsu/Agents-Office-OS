@@ -37,6 +37,7 @@ export function createRunner(store, { complete: call = complete, company = {}, n
         return store.updateTask(taskId, { status: 'failed', error: err.message, finishedAt: new Date().toISOString() });
       } finally {
         running.delete(taskId);
+        store.scheduleNext(taskId);
         notify(store.task(taskId), agent).catch(() => {});
       }
     },
