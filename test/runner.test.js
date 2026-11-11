@@ -109,3 +109,17 @@ test('estimates cost from token usage and agent prices', async () => {
   assert.equal(s.stats().support.cost, null);
   assert.throws(() => s.updateAgent('bugs', { priceIn: 'cheap' }), /dollars per 1M tokens/);
 });
+
+test('a repeating task queues its next copy when done', async () => {
+  const s = store();
+  const t = s.addTask({ title: 'Weekly report', agentId: 'marketing', repeat: 'weekly', due: '2026-11-02' });
+  const runner = createRunner(s, { complete: async () => ({ text: 'ok', usage: { input: 0, output: 0 } }) });
+  await runner.run(t.id);
+  const next = s.tasks().find((x) => x.id !== t.id);
+  assert.equal(next.status, 'todo');
+  assert.equal(next.due, '2026-11-09');
+  assert.equal(next.repeat, 'weekly');
+  await runner.run(t.id); // redoing the same task doesn't queue a second copy
+  assert.equal(s.tasks().length, 2);
+  assert.throws(() => s.addTask({ title: 'x', agentId: 'support', repeat: 'hourly' }), /bad repeat/);
+});
