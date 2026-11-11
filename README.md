@@ -11,6 +11,7 @@ them work, and read what they hand back.
 - **One model per agent**: put your support agent on a fast, cheap model and your bug fixer on a strong one
 - **Task board**: to do, working, done and needs attention, updated live, with high-priority tasks on top and overdue tasks flagged
 - **Readable results**: formatted output you can copy or download as Markdown
+- **Duplicate**: copy any task into the new-task form to tweak and reuse it
 - **Repeating tasks**: set a task to repeat daily or weekly and the next one is queued when it's done
 - **Follow-ups**: reply to a finished task ("make it shorter") and the agent revises it, keeping the conversation
 - **Hand-offs**: pass a result to another agent, e.g. Marketing's campaign to Social Media for posts
