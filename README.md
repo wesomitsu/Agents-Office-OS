@@ -11,6 +11,7 @@ them work, and read what they hand back.
 - **One model per agent**: put your support agent on a fast, cheap model and your bug fixer on a strong one
 - **Task board**: to do, working, done and needs attention, updated live, with high-priority tasks on top and overdue tasks flagged
 - **Readable results**: formatted output you can copy or download as Markdown
+- **Repeating tasks**: set a task to repeat daily or weekly and the next one is queued when it's done
 - **Follow-ups**: reply to a finished task ("make it shorter") and the agent revises it, keeping the conversation
 - **Hand-offs**: pass a result to another agent, e.g. Marketing's campaign to Social Media for posts
 - **Your keys stay yours**: keys are read from your local `.env` file only, never saved in the office data or sent to the browser
@@ -111,7 +112,7 @@ work for.
 | Method | Path | What it does |
 |---|---|---|
 | `GET` | `/api/office` | Agents, tasks and provider status |
-| `POST` | `/api/tasks` | Create a task `{ title, details, agentId, priority, due }` (`high`/`normal`/`low`, due as `YYYY-MM-DD`) |
+| `POST` | `/api/tasks` | Create a task `{ title, details, agentId, priority, due, repeat }` (`high`/`normal`/`low`, due as `YYYY-MM-DD`, repeat `daily`/`weekly`) |
 | `POST` | `/api/tasks/:id/run` | Start (or redo) a task |
 | `POST` | `/api/tasks/:id/handoff` | Pass a finished result to another agent `{ agentId, note, run }` |
 | `POST` | `/api/tasks/:id/reply` | Send a follow-up `{ message }` on a finished task |
