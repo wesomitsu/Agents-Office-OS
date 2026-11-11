@@ -104,7 +104,7 @@ function card(t) {
     ${dueLabel(t)}${t.repeat ? `<div class="due">↻ Repeats ${esc(t.repeat)}</div>` : ''}
     ${t.usage && t.usage.input + t.usage.output ? `<div class="tokens">${fmtTokens(t.usage.input + t.usage.output)} tokens</div>` : ''}
     ${t.error ? `<div class="err">${esc(t.error)}</div>` : ''}
-    <div class="buttons">${buttons}${t.status !== 'working' ? `<button class="btn small" data-delete="${t.id}" title="Delete">✕</button>` : ''}</div>
+    <div class="buttons">${buttons}<button class="btn small" data-dup="${t.id}" title="Make a copy to edit">⧉</button>${t.status !== 'working' ? `<button class="btn small" data-delete="${t.id}" title="Delete">✕</button>` : ''}</div>
   </div>`;
 }
 
@@ -123,11 +123,24 @@ function openAgent(agent) {
 }
 
 document.addEventListener('click', async (e) => {
-  const t = e.target.closest('[data-run],[data-view],[data-delete],[data-agent],#add-agent,#new-task');
+  const t = e.target.closest('[data-run],[data-view],[data-delete],[data-dup],[data-agent],#add-agent,#new-task');
   if (!t) return;
   try {
     if (t.id === 'new-task') return $('#task-dialog').showModal();
     if (t.id === 'add-agent') return openAgent(null);
+    if (t.dataset.dup) {
+      // Opens the new-task form pre-filled from this task, so it can be tweaked first.
+      const src = office.tasks.find((x) => x.id === t.dataset.dup);
+      const f = $('#task-form');
+      f.elements.title.value = src.title;
+      f.elements.details.value = src.details;
+      f.elements.priority.value = src.priority || 'normal';
+      f.elements.due.value = '';
+      f.elements.repeat.value = '';
+      $('#task-dialog').showModal();
+      f.elements.agentId.value = src.agentId;
+      return;
+    }
     if (t.dataset.agent) return openAgent(office.agents.find((a) => a.id === t.dataset.agent));
     if (t.dataset.run) await api('POST', `/api/tasks/${t.dataset.run}/run`);
     if (t.dataset.delete) await api('DELETE', `/api/tasks/${t.dataset.delete}`);
