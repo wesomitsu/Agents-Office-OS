@@ -118,3 +118,12 @@ test('clears finished tasks, optionally for one agent', async () => {
     assert.deepEqual(left.map((t) => t.title), ['still to do']);
   });
 });
+
+test('health check answers without a login and leaks nothing', async () => {
+  await withServer(async (_, base) => {
+    const res = await fetch(`${base}/api/health`);
+    assert.equal(res.status, 200);
+    assert.deepEqual(await res.json(), { ok: true });
+    assert.equal((await fetch(`${base}/api/office`)).status, 401);
+  }, { OFFICE_PASSWORD: 'pw' });
+});
