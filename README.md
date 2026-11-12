@@ -60,6 +60,9 @@ switch its provider and model.
 | OpenRouter, Groq, Together... | `OPENAI_API_KEY` + `OPENAI_BASE_URL` | set the model on the agent |
 | Ollama (local) | `OPENAI_BASE_URL=http://localhost:11434/v1` | set the model on the agent, e.g. `llama3.1` |
 
+If an OpenAI-compatible API is busy (429) or briefly down (5xx), the request is
+retried up to 3 times. The Anthropic SDK has its own retries.
+
 The header shows which providers are ready (●) and which still need a key (○).
 
 ## The team
