@@ -16,7 +16,7 @@ them work, and read what they hand back.
 - **Follow-ups**: reply to a finished task ("make it shorter") and the agent revises it, keeping the conversation
 - **Hand-offs**: pass a result to another agent, e.g. Marketing's campaign to Social Media for posts
 - **Your keys stay yours**: keys are read from your local `.env` file only, never saved in the office data or sent to the browser
-- Light and dark mode, no build step, runs on Node 22+
+- Light and dark mode, works on phones, no build step, runs on Node 22+
 
 | Light | Dark |
 |---|---|
