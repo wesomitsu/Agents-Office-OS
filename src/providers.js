@@ -71,7 +71,7 @@ export async function complete({ provider, model, system, prompt, history = [] }
 
   // OpenAI-compatible chat completions
   const base = (env.OPENAI_BASE_URL || 'https://api.openai.com/v1').replace(/\/+$/, '');
-  const res = await fetch(`${base}/chat/completions`, {
+  const res = await withRetries(() => fetch(`${base}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -85,7 +85,7 @@ export async function complete({ provider, model, system, prompt, history = [] }
         { role: 'user', content: prompt },
       ],
     }),
-  });
+  }), { wait: env.RETRY_WAIT_MS });
   if (!res.ok) throw new Error(`${p.label} returned ${res.status}: ${(await res.text()).slice(0, 300)}`);
   const data = await res.json();
   return {
@@ -98,4 +98,19 @@ export async function complete({ provider, model, system, prompt, history = [] }
 function demoReply(system, prompt) {
   const role = system.match(/^You are (.+?)\./)?.[1] ?? 'an agent';
   return `[demo reply from ${role}]\n\nI'd start on "${prompt.split('\n')[0].slice(0, 80)}" like this:\n1. Clarify the goal and audience\n2. Draft the work\n3. Review it and hand it back\n\nAdd an API key in .env and pick a real provider to get real answers.`;
+}
+
+// Retries a request when the API says it's busy (429) or briefly down (5xx),
+// waiting 1s, 2s, then 4s, or as long as a Retry-After header asks (up to 30s).
+// The Anthropic SDK already retries on its own, so this is for OpenAI-compatible APIs.
+export async function withRetries(send, { tries = 4, wait } = {}) {
+  const base = wait === undefined ? 1000 : Number(wait);
+  for (let attempt = 1; ; attempt++) {
+    const res = await send();
+    const retryable = res.status === 429 || res.status >= 500;
+    if (!retryable || attempt >= tries) return res;
+    const after = Number(res.headers?.get?.('retry-after'));
+    const ms = Number.isFinite(after) && after > 0 ? Math.min(after * 1000, 30_000) : base * 2 ** (attempt - 1);
+    await new Promise((r) => setTimeout(r, wait === undefined ? ms : base));
+  }
 }

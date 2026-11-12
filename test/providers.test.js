@@ -77,3 +77,26 @@ test('passes earlier turns to both providers', async () => {
   await complete({ provider: 'openai', ...ask, history }, { env: { OPENAI_API_KEY: 'x' }, fetch });
   assert.deepEqual(body.messages.map((m) => m.role), ['system', 'user', 'assistant', 'user']);
 });
+
+test('openai-compatible: retries busy responses, then gives up', async () => {
+  let calls = 0;
+  const flaky = async () => {
+    calls++;
+    if (calls < 3) return { ok: false, status: 429, headers: new Map(), text: async () => 'slow down' };
+    return { ok: true, status: 200, json: async () => ({ choices: [{ message: { content: 'done' } }] }) };
+  };
+  const env = { OPENAI_API_KEY: 'x', RETRY_WAIT_MS: '0' };
+  const { text } = await complete({ provider: 'openai', ...ask }, { env, fetch: flaky });
+  assert.equal(text, 'done');
+  assert.equal(calls, 3);
+
+  let down = 0;
+  const alwaysDown = async () => (down++, { ok: false, status: 503, headers: new Map(), text: async () => 'down' });
+  await assert.rejects(complete({ provider: 'openai', ...ask }, { env, fetch: alwaysDown }), /returned 503/);
+  assert.equal(down, 4);
+
+  let bad = 0;
+  const badKey = async () => (bad++, { ok: false, status: 401, headers: new Map(), text: async () => 'bad key' });
+  await assert.rejects(complete({ provider: 'openai', ...ask }, { env, fetch: badKey }), /returned 401/);
+  assert.equal(bad, 1); // client errors are not retried
+});
