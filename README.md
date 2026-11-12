@@ -115,6 +115,7 @@ work for.
 
 | Method | Path | What it does |
 |---|---|---|
+| `GET` | `/api/health` | `{ ok: true }` for Docker and uptime monitors (no login needed) |
 | `GET` | `/api/office` | Agents, tasks and provider status |
 | `POST` | `/api/tasks` | Create a task `{ title, details, agentId, priority, due, repeat }` (`high`/`normal`/`low`, due as `YYYY-MM-DD`, repeat `daily`/`weekly`) |
 | `POST` | `/api/tasks/:id/run` | Start (or redo) a task |

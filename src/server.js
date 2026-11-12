@@ -61,6 +61,9 @@ export function createApp({ store, runner, env = process.env }) {
   ];
 
   return async function handle(req, res) {
+    // Health check for Docker and uptime monitors. Says nothing about the office,
+    // so it's safe to leave outside the password.
+    if (req.method === 'GET' && req.url === '/api/health') return send(res, 200, { ok: true });
     if (env.OFFICE_PASSWORD && !authorized(req, env.OFFICE_PASSWORD)) {
       res.writeHead(401, { 'WWW-Authenticate': 'Basic realm="Agents Office", charset="UTF-8"' });
       return res.end('Login required');
