@@ -101,7 +101,7 @@ main { padding: 0 24px 40px; display: grid; gap: 20px; }
   main, .topbar, .footer { padding-left: 16px; padding-right: 16px; }
   /* Stack form fields on phones so nothing overflows the dialog */
   .row { flex-direction: column; }
-  label.small, label.small-select { flex: 1 1 auto; }
+  .row > label, .row > label.small, .row > label.small-select { flex: none; }
   .row.handoff { align-items: stretch; }
   dialog form { padding: 16px; }
   .actions { flex-wrap: wrap; }
@@ -136,7 +136,7 @@ label.small-select { flex: 0 0 130px; }
 kbd { font: 12px ui-monospace, monospace; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 6px; padding: 1px 6px; background: var(--panel); color: var(--ink); }
 
 /* Dialogs */
-dialog { border: 1px solid var(--line); border-radius: 18px; padding: 0; background: var(--panel); color: var(--ink); width: min(520px, 94vw); box-shadow: var(--shadow); }
+dialog { max-height: calc(100dvh - 32px); overflow: auto; border: 1px solid var(--line); border-radius: 18px; padding: 0; background: var(--panel); color: var(--ink); width: min(520px, 94vw); box-shadow: var(--shadow); }
 dialog::backdrop { background: rgba(10, 12, 20, .45); backdrop-filter: blur(2px); }
 dialog form { padding: 20px; display: grid; gap: 12px; }
 dialog h3 { margin: 0 0 4px; }
