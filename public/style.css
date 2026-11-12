@@ -96,7 +96,18 @@ main { padding: 0 24px 40px; display: grid; gap: 20px; }
 .board-bar h2 { margin-right: auto; }
 .board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
 @media (max-width: 900px) { .board { grid-template-columns: 1fr 1fr; } }
-@media (max-width: 560px) { .board { grid-template-columns: 1fr; } main, .topbar { padding-left: 16px; padding-right: 16px; } }
+@media (max-width: 560px) {
+  .board { grid-template-columns: 1fr; }
+  main, .topbar, .footer { padding-left: 16px; padding-right: 16px; }
+  /* Stack form fields on phones so nothing overflows the dialog */
+  .row { flex-direction: column; }
+  .row > label, .row > label.small, .row > label.small-select { flex: none; }
+  .row.handoff { align-items: stretch; }
+  dialog form { padding: 16px; }
+  .actions { flex-wrap: wrap; }
+  .top-right { width: 100%; }
+  .top-right .btn.primary { margin-left: auto; }
+}
 .col { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 12px; min-height: 140px; }
 .col h2 .linkish { font-size: 12px; text-transform: none; letter-spacing: 0; margin-left: auto; padding-left: 8px; }
 .col h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 2px 4px 10px; display: flex; justify-content: space-between; }
@@ -125,7 +136,7 @@ label.small-select { flex: 0 0 130px; }
 kbd { font: 12px ui-monospace, monospace; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 6px; padding: 1px 6px; background: var(--panel); color: var(--ink); }
 
 /* Dialogs */
-dialog { border: 1px solid var(--line); border-radius: 18px; padding: 0; background: var(--panel); color: var(--ink); width: min(520px, 94vw); box-shadow: var(--shadow); }
+dialog { max-height: calc(100dvh - 32px); overflow: auto; border: 1px solid var(--line); border-radius: 18px; padding: 0; background: var(--panel); color: var(--ink); width: min(520px, 94vw); box-shadow: var(--shadow); }
 dialog::backdrop { background: rgba(10, 12, 20, .45); backdrop-filter: blur(2px); }
 dialog form { padding: 20px; display: grid; gap: 12px; }
 dialog h3 { margin: 0 0 4px; }
