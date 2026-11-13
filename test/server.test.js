@@ -139,3 +139,18 @@ test('an off-duty agent takes no new work', async () => {
     assert.equal((await api('POST', `/api/tasks/${t.id}/run`)).status, 202);
   });
 });
+
+test('exports tasks as CSV and neutralises formulas', async () => {
+  await withServer(async (api, base) => {
+    await api('POST', '/api/tasks', { title: '=HYPERLINK("http://x")', details: 'line1\nline2, "quoted"', agentId: 'support' });
+    const res = await fetch(`${base}/api/tasks.csv`);
+    assert.equal(res.status, 200);
+    assert.match(res.headers.get('content-type'), /text\/csv/);
+    assert.match(res.headers.get('content-disposition'), /agents-office-tasks\.csv/);
+    const text = (await res.text()).replace(/^﻿/, '');
+    const lines = text.split('\r\n');
+    assert.equal(lines[0], 'title,agent,role,status,priority,due,created,finished,tokens,details,result,error');
+    assert.ok(lines[1].startsWith(`"'=HYPERLINK(""http://x"")",Sage,Support,todo,normal`), lines[1]);
+    assert.ok(text.includes('"line1\nline2, ""quoted"""'));
+  });
+});
