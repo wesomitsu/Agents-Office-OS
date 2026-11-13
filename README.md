@@ -125,6 +125,7 @@ work for.
 | `POST` | `/api/tasks/:id/handoff` | Pass a finished result to another agent `{ agentId, note, run }` |
 | `POST` | `/api/tasks/:id/reply` | Send a follow-up `{ message }` on a finished task |
 | `PATCH`/`DELETE` | `/api/tasks/:id` | Edit or delete a task |
+| `POST` | `/api/tasks/start-all` | Start every waiting task `{ agentId? }` (off-duty agents are skipped) |
 | `POST` | `/api/tasks/clear-done` | Delete finished tasks `{ agentId? }` |
 | `GET` | `/api/tasks.csv` | Download every task as a spreadsheet |
 | `GET`/`POST` | `/api/export`, `/api/import` | Save or load the team `{ agents }` |
