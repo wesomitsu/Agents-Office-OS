@@ -21,6 +21,7 @@ export function createRunner(store, { complete: call = complete, company = {}, n
       if (running.has(taskId)) throw new Error('task is already running');
       const agent = store.agent(task.agentId);
       if (!agent) throw new Error('the agent for this task was removed');
+      if (agent.offDuty === 'true') throw new Error(`${agent.name} is off duty`);
 
       running.add(taskId);
       store.updateTask(taskId, { status: 'working', error: '', startedAt: new Date().toISOString(), finishedAt: '' });

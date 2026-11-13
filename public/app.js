@@ -43,7 +43,7 @@ function render() {
         const spent = st?.cost !== null && st?.cost !== undefined ? ` · ~$${st.cost > 0 && st.cost < 0.01 ? '<0.01' : st.cost.toFixed(2)}` : '';
         const record = st?.done ? `${st.done} done${st.avgSeconds !== null ? ` · ~${st.avgSeconds < 60 ? `${Math.round(st.avgSeconds)}s` : `${Math.round(st.avgSeconds / 60)}m`}` : ''}${spent}` : 'No tasks yet';
         const provider = providers.find((p) => p.id === a.provider);
-        return `<article class="desk ${busy.has(a.id) ? 'working' : 'idle'}" data-agent="${esc(a.id)}" style="animation-delay:${i * 60}ms" tabindex="0" aria-label="${esc(a.name)}, ${esc(a.role)}">
+        return `<article class="desk ${busy.has(a.id) ? 'working' : a.offDuty === 'true' ? 'off' : 'idle'}" data-agent="${esc(a.id)}" style="animation-delay:${i * 60}ms" tabindex="0" aria-label="${esc(a.name)}, ${esc(a.role)}">
           <span class="status" title="${busy.has(a.id) ? 'Working' : 'Available'}"></span>
           <div class="station">
             <div class="monitor"><div class="lines"><span></span><span></span><span></span></div></div>
@@ -52,7 +52,7 @@ function render() {
             <div class="bubble"><b>•</b><b>•</b><b>•</b></div>
           </div>
           <h3>${esc(a.name)}</h3>
-          <div class="role">${esc(a.role)}</div>
+          <div class="role">${esc(a.role)}${a.offDuty === 'true' ? ' · 😴 Off duty' : ''}</div>
           <div class="record">${esc(record)}</div>
           <div class="meta"><span class="tag">${esc(provider?.label.split(' ')[0] ?? a.provider)}${a.model ? ` · ${esc(a.model)}` : ''}</span><span>${open} open</span></div>
         </article>`;
@@ -135,6 +135,7 @@ function openAgent(agent) {
     (office.templates ?? []).map((t, i) => `<option value="${i}">${esc(t.emoji)} ${esc(t.role)}</option>`).join('');
   const values = agent ?? { emoji: '🤖', name: '', role: '', provider: 'demo', model: '', instructions: '', priceIn: '', priceOut: '' };
   for (const k of ['emoji', 'name', 'role', 'provider', 'model', 'instructions', 'priceIn', 'priceOut']) f.elements[k].value = values[k] ?? '';
+  f.elements.offDuty.checked = values.offDuty === 'true';
   $('#agent-dialog').showModal();
 }
 
@@ -232,6 +233,7 @@ $('#agent-dialog').addEventListener('close', async () => {
   const d = $('#agent-dialog');
   const f = $('#agent-form');
   const body = Object.fromEntries(['emoji', 'name', 'role', 'provider', 'model', 'instructions', 'priceIn', 'priceOut'].map((k) => [k, f.elements[k].value]));
+  body.offDuty = f.elements.offDuty.checked ? 'true' : '';
   try {
     if (d.returnValue === 'ok') await (editingAgent ? api('PATCH', `/api/agents/${editingAgent.id}`, body) : api('POST', '/api/agents', body));
     if (d.returnValue === 'delete' && confirm(`Remove ${editingAgent.name} from the office?`)) await api('DELETE', `/api/agents/${editingAgent.id}`);
