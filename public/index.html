@@ -80,6 +80,7 @@
         <label>Input price<input name="priceIn" inputmode="decimal" placeholder="$ per 1M tokens"></label>
         <label>Output price<input name="priceOut" inputmode="decimal" placeholder="$ per 1M tokens"></label>
       </div>
+      <label class="check"><input type="checkbox" name="offDuty"> Off duty (takes no new tasks)</label>
       <p class="hint">Prices are optional and only used to estimate what each agent has spent; copy them from your provider's pricing page. API keys live in your <code>.env</code> file, never in the office.</p>
       <div class="actions"><button value="delete" class="btn danger" id="agent-delete" formnovalidate>Remove</button><span></span><button value="cancel" class="btn" formnovalidate>Cancel</button><button value="ok" class="btn primary">Save</button></div>
     </form>

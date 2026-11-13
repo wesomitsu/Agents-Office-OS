@@ -63,6 +63,8 @@ main { padding: 0 24px 40px; display: grid; gap: 20px; }
 .desk .status { position: absolute; top: 12px; right: 12px; width: 10px; height: 10px; border-radius: 50%; background: var(--muted); }
 .desk.working .status { background: var(--warn); animation: pulse 1.2s infinite; }
 .desk.idle .status { background: var(--ok); }
+.desk.off { opacity: .6; }
+.desk.off .status { background: var(--muted); }
 .station { position: relative; height: 112px; margin-bottom: 10px; }
 .monitor { position: absolute; left: 50%; translate: -50% 0; top: 0; width: 92px; height: 56px; border-radius: 8px; background: var(--screen); border: 3px solid #2b3245; overflow: hidden; }
 .monitor::after { content: ""; position: absolute; left: 50%; bottom: -12px; translate: -50% 0; width: 10px; height: 10px; background: #2b3245; }
