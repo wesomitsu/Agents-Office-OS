@@ -127,3 +127,15 @@ test('health check answers without a login and leaks nothing', async () => {
     assert.equal((await fetch(`${base}/api/office`)).status, 401);
   }, { OFFICE_PASSWORD: 'pw' });
 });
+
+test('an off-duty agent takes no new work', async () => {
+  await withServer(async (api) => {
+    await api('PATCH', '/api/agents/social', { offDuty: 'true' });
+    const t = (await api('POST', '/api/tasks', { title: 'Post', agentId: 'social' })).data;
+    const r = await api('POST', `/api/tasks/${t.id}/run`);
+    assert.equal(r.status, 400);
+    assert.match(r.data.error, /Sky is off duty/);
+    await api('PATCH', '/api/agents/social', { offDuty: 'nonsense' });
+    assert.equal((await api('POST', `/api/tasks/${t.id}/run`)).status, 202);
+  });
+});

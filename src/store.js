@@ -3,7 +3,7 @@ import { dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { DEFAULT_AGENTS } from './defaults.js';
 
-const AGENT_FIELDS = ['name', 'role', 'emoji', 'provider', 'model', 'instructions', 'priceIn', 'priceOut'];
+const AGENT_FIELDS = ['name', 'role', 'emoji', 'provider', 'model', 'instructions', 'priceIn', 'priceOut', 'offDuty'];
 const STATUSES = new Set(['todo', 'working', 'done', 'failed']);
 const PRIORITIES = new Set(['high', 'normal', 'low']);
 const REPEATS = new Set(['', 'daily', 'weekly']);
@@ -35,6 +35,8 @@ export function createStore(path) {
   const pick = (input) => {
     const out = Object.fromEntries(AGENT_FIELDS.filter((k) => k in input).map((k) => [k, String(input[k] ?? '').trim()]));
     // Prices are optional: US dollars per 1 million tokens, used only for cost estimates.
+    // offDuty is stored as 'true' or '' so the agent file stays all strings.
+    if ('offDuty' in out) out.offDuty = out.offDuty === 'true' ? 'true' : '';
     for (const k of ['priceIn', 'priceOut']) {
       if (out[k] && !(/^\d+(\.\d+)?$/.test(out[k]) && Number(out[k]) <= 10000)) throw new Error(`${k} must be a number of dollars per 1M tokens`);
     }
