@@ -18,6 +18,7 @@ export function createApp({ store, runner, env = process.env }) {
 
   const routes = [
     ['GET', /^\/api\/office$/, () => ({ company, providers: providerStatus(env), templates: AGENT_TEMPLATES, agents: store.agents(), stats: store.stats(), tasks: store.tasks() })],
+    ['GET', /^\/api\/tasks\.csv$/, () => ({ raw: tasksCsv(store), type: 'text/csv; charset=utf-8', filename: 'agents-office-tasks.csv' })],
     ['GET', /^\/api\/export$/, () => ({ app: 'agents-office-os', version: 1, agents: store.agents() })],
     ['POST', /^\/api\/import$/, (_, body) => ({ agents: store.importAgents(body.agents) })],
     ['POST', /^\/api\/agents$/, (_, body) => [201, store.addAgent(body)]],
@@ -82,6 +83,10 @@ export function createApp({ store, runner, env = process.env }) {
           let status = 200;
           if (Array.isArray(result)) [status, result] = result;
           if (result === null) return send(res, 404, { error: 'not found' });
+          if (result?.raw !== undefined) {
+            res.writeHead(status, { 'Content-Type': result.type, 'Content-Disposition': `attachment; filename="${result.filename}"` });
+            return res.end(result.raw);
+          }
           return send(res, status, result);
         }
         return send(res, 404, { error: 'not found' });
@@ -101,6 +106,23 @@ function authorized(req, password) {
   const a = Buffer.from(given);
   const b = Buffer.from(password);
   return a.length === b.length && timingSafeEqual(a, b);
+}
+
+// One row per task, for spreadsheets. Cells that start with = + - @ get a leading
+// apostrophe so a spreadsheet never runs model output as a formula.
+export function tasksCsv(store) {
+  const cell = (v) => {
+    let s = String(v ?? '');
+    if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const head = ['title', 'agent', 'role', 'status', 'priority', 'due', 'created', 'finished', 'tokens', 'details', 'result', 'error'];
+  const rows = store.tasks().map((t) => {
+    const a = store.agent(t.agentId);
+    return [t.title, a?.name ?? '', a?.role ?? '', t.status, t.priority ?? '', t.due ?? '', t.createdAt, t.finishedAt ?? '',
+      (t.usage?.input ?? 0) + (t.usage?.output ?? 0), t.details, t.output, t.error];
+  });
+  return '\ufeff' + [head, ...rows].map((r) => r.map(cell).join(',')).join('\r\n') + '\r\n';
 }
 
 async function readJson(req) {
