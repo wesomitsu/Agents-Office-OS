@@ -10,7 +10,7 @@ them work, and read what they hand back.
 - **Bring any AI**: Anthropic (Claude), any OpenAI-compatible API (OpenAI, OpenRouter, Groq, Together, a local Ollama), or the built-in demo
 - **One model per agent**: put your support agent on a fast, cheap model and your bug fixer on a strong one
 - **Task board**: to do, working, done and needs attention, updated live, with high-priority tasks on top and overdue tasks flagged
-- **Readable results**: formatted output you can copy or download as Markdown
+- **Readable results**: formatted output you can copy or download as Markdown, or export every task as CSV
 - **Duplicate**: copy any task into the new-task form to tweak and reuse it
 - **Repeating tasks**: set a task to repeat daily or weekly and the next one is queued when it's done
 - **Follow-ups**: reply to a finished task ("make it shorter") and the agent revises it, keeping the conversation
@@ -126,6 +126,7 @@ work for.
 | `POST` | `/api/tasks/:id/reply` | Send a follow-up `{ message }` on a finished task |
 | `PATCH`/`DELETE` | `/api/tasks/:id` | Edit or delete a task |
 | `POST` | `/api/tasks/clear-done` | Delete finished tasks `{ agentId? }` |
+| `GET` | `/api/tasks.csv` | Download every task as a spreadsheet |
 | `GET`/`POST` | `/api/export`, `/api/import` | Save or load the team `{ agents }` |
 | `POST` | `/api/agents` | Hire an agent |
 | `PATCH`/`DELETE` | `/api/agents/:id` | Edit or remove an agent |
