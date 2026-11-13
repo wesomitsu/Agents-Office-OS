@@ -26,6 +26,25 @@ export function createApp({ store, runner, env = process.env }) {
     ['DELETE', /^\/api\/agents\/([\w-]+)$/, ([id]) => (store.removeAgent(id) ? { ok: true } : null)],
     ['POST', /^\/api\/tasks$/, (_, body) => [201, store.addTask(body)]],
     ['PATCH', /^\/api\/tasks\/([\w-]+)$/, ([id], body) => store.updateTask(id, body)],
+    [
+      'POST',
+      /^\/api\/tasks\/start-all$/,
+      (_, body) => {
+        // Starts every waiting task (optionally one agent's), skipping off-duty agents.
+        const waiting = store.tasks().filter((t) => t.status === 'todo' && (!body.agentId || t.agentId === body.agentId));
+        let started = 0;
+        let skipped = 0;
+        for (const t of waiting) {
+          if (store.agent(t.agentId)?.offDuty === 'true' || runner.isRunning(t.id)) {
+            skipped++;
+            continue;
+          }
+          runner.run(t.id).catch(() => {});
+          started++;
+        }
+        return { started, skipped };
+      },
+    ],
     ['POST', /^\/api\/tasks\/clear-done$/, (_, body) => ({ removed: store.clearDone(body.agentId || undefined) })],
     ['DELETE', /^\/api\/tasks\/([\w-]+)$/, ([id]) => (store.removeTask(id) ? { ok: true } : null)],
     [
