@@ -31,7 +31,10 @@ export function createApp({ store, runner, env = process.env }) {
       'POST',
       /^\/api\/tasks\/([\w-]+)\/run$/,
       ([id]) => {
-        if (!store.task(id)) return null;
+        const task = store.task(id);
+        if (!task) return null;
+        const agent = store.agent(task.agentId);
+        if (agent?.offDuty === 'true') throw new Error(`${agent.name} is off duty. Put them back on duty to start this task.`);
         runner.run(id).catch(() => {}); // runs in the background; the UI polls for the result
         return [202, store.task(id)];
       },
