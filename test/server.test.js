@@ -154,3 +154,17 @@ test('exports tasks as CSV and neutralises formulas', async () => {
     assert.ok(text.includes('"line1\nline2, ""quoted"""'));
   });
 });
+
+test('starts all waiting tasks, skipping off-duty agents', async () => {
+  await withServer(async (api) => {
+    await api('POST', '/api/tasks', { title: 'a', agentId: 'support' });
+    await api('POST', '/api/tasks', { title: 'b', agentId: 'bugs' });
+    await api('POST', '/api/tasks', { title: 'c', agentId: 'web' });
+    await api('PATCH', '/api/agents/web', { offDuty: 'true' });
+    assert.deepEqual((await api('POST', '/api/tasks/start-all', { agentId: 'support' })).data, { started: 1, skipped: 0 });
+    assert.deepEqual((await api('POST', '/api/tasks/start-all', {})).data, { started: 1, skipped: 1 });
+    await new Promise((r) => setTimeout(r, 30));
+    const statuses = (await api('GET', '/api/office')).data.tasks.map((t) => `${t.title}:${t.status}`).sort();
+    assert.deepEqual(statuses, ['a:done', 'b:done', 'c:todo']);
+  });
+});

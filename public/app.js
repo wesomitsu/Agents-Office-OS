@@ -264,6 +264,16 @@ $('#import-team').addEventListener('change', async (e) => {
   }
 });
 
+$('#start-all').addEventListener('click', async () => {
+  try {
+    const r = await api('POST', '/api/tasks/start-all', { agentId: filter });
+    if (r.skipped) alert(`Started ${r.started}. ${r.skipped} skipped because their agent is off duty.`);
+    await refresh();
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
 $('#clear-done').addEventListener('click', async () => {
   const who = filter ? office.agents.find((a) => a.id === filter)?.name : null;
   const count = office.tasks.filter((t) => t.status === 'done' && (!filter || t.agentId === filter)).length;
