@@ -23,6 +23,15 @@ export function createApp({ store, runner, env = process.env }) {
     ['POST', /^\/api\/import$/, (_, body) => ({ agents: store.importAgents(body.agents) })],
     ['POST', /^\/api\/agents$/, (_, body) => [201, store.addAgent(body)]],
     ['PATCH', /^\/api\/agents\/([\w-]+)$/, ([id], body) => store.updateAgent(id, body)],
+    [
+      'POST',
+      /^\/api\/agents\/([\w-]+)\/move$/,
+      ([id], body) => {
+        if (body.direction !== 'left' && body.direction !== 'right') throw new Error('direction must be left or right');
+        const order = store.moveAgent(id, body.direction === 'left' ? -1 : 1);
+        return order && { order };
+      },
+    ],
     ['DELETE', /^\/api\/agents\/([\w-]+)$/, ([id]) => (store.removeAgent(id) ? { ok: true } : null)],
     ['POST', /^\/api\/tasks$/, (_, body) => [201, store.addTask(body)]],
     ['PATCH', /^\/api\/tasks\/([\w-]+)$/, ([id], body) => store.updateTask(id, body)],

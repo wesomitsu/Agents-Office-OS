@@ -83,7 +83,9 @@ The header shows which providers are ready (●) and which still need a key (○
 Click a desk to rename an agent, change its emoji, job, provider, model or
 instructions. Add the model's input and output prices ($ per 1M tokens, from your
 provider's pricing page) and the desk shows an estimate of what that agent has
-spent, based on the tokens its tasks used. Tick **Off duty** on a desk to stop an agent taking new tasks (they can't be
+spent, based on the tokens its tasks used. Use ◀ ▶ in a desk's dialog to rearrange the office.
+
+Tick **Off duty** on a desk to stop an agent taking new tasks (they can't be
 started until you turn it off again).
 
 Click **+ Hire an agent** to add someone new, blank or from a template: SEO,
