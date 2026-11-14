@@ -70,3 +70,15 @@ test('tasks can have a due date', () => {
   assert.throws(() => store.addTask({ title: 'c', agentId: 'support', due: 'tomorrow' }), /bad due date/);
   assert.throws(() => store.updateTask(t.id, { due: '2026-13-45' }), /bad due date/);
 });
+
+test('a task can be edited before it runs', () => {
+  const store = createStore(tmpFile());
+  const t = store.addTask({ title: 'Draft', agentId: 'support' });
+  const edited = store.updateTask(t.id, { title: 'Final', agentId: 'marketing', repeat: 'weekly' });
+  assert.equal(edited.title, 'Final');
+  assert.equal(edited.agentId, 'marketing');
+  assert.equal(edited.repeat, 'weekly');
+  assert.throws(() => store.updateTask(t.id, { agentId: 'ghost' }), /unknown agent/);
+  assert.throws(() => store.updateTask(t.id, { repeat: 'hourly' }), /bad repeat/);
+  assert.throws(() => store.updateTask(t.id, { title: '  ' }), /title is required/);
+});
