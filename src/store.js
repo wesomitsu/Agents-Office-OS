@@ -64,6 +64,17 @@ export function createStore(path) {
       return a;
     },
 
+    // Moves a desk one place left (-1) or right (+1) in the office.
+    moveAgent(id, step) {
+      const i = state.agents.findIndex((a) => a.id === id);
+      if (i < 0) return null;
+      const j = Math.max(0, Math.min(state.agents.length - 1, i + step));
+      const [a] = state.agents.splice(i, 1);
+      state.agents.splice(j, 0, a);
+      save();
+      return state.agents.map((x) => x.id);
+    },
+
     removeAgent(id) {
       const before = state.agents.length;
       state.agents = state.agents.filter((a) => a.id !== id);
