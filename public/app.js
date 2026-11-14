@@ -144,6 +144,8 @@ function openAgent(agent) {
   const f = $('#agent-form');
   $('#agent-title').textContent = agent ? `${agent.name}'s desk` : 'Hire an agent';
   $('#agent-delete').hidden = !agent;
+  $('#move-left').hidden = !agent;
+  $('#move-right').hidden = !agent;
   $('#template-row').hidden = Boolean(agent);
   $('#agent-template').innerHTML =
     '<option value="">Blank agent</option>' +
@@ -298,6 +300,18 @@ $('#start-all').addEventListener('click', async () => {
     alert(err.message);
   }
 });
+
+for (const [btn, direction] of [['#move-left', 'left'], ['#move-right', 'right']]) {
+  $(btn).addEventListener('click', async () => {
+    if (!editingAgent) return;
+    try {
+      await api('POST', `/api/agents/${editingAgent.id}/move`, { direction });
+      await refresh();
+    } catch (err) {
+      alert(err.message);
+    }
+  });
+}
 
 $('#clear-done').addEventListener('click', async () => {
   const who = filter ? office.agents.find((a) => a.id === filter)?.name : null;

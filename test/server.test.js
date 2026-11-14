@@ -168,3 +168,15 @@ test('starts all waiting tasks, skipping off-duty agents', async () => {
     assert.deepEqual(statuses, ['a:done', 'b:done', 'c:todo']);
   });
 });
+
+test('rearranges desks', async () => {
+  await withServer(async (api) => {
+    const r = await api('POST', '/api/agents/support/move', { direction: 'left' });
+    assert.deepEqual(r.data.order, ['social', 'marketing', 'web', 'support', 'bugs']);
+    assert.deepEqual((await api('POST', '/api/agents/social/move', { direction: 'left' })).data.order[0], 'social');
+    assert.equal((await api('POST', '/api/agents/social/move', { direction: 'up' })).status, 400);
+    assert.equal((await api('POST', '/api/agents/ghost/move', { direction: 'left' })).status, 404);
+    const office = (await api('GET', '/api/office')).data;
+    assert.equal(office.agents[3].id, 'support');
+  });
+});
