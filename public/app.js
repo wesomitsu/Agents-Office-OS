@@ -110,7 +110,7 @@ function card(t) {
   const a = office.agents.find((x) => x.id === t.agentId);
   const buttons = {
     todo: `<button class="btn small" data-run="${t.id}">▶ Start</button>`,
-    working: `<span class="who">Working on it…</span>`,
+    working: `<span class="who">${office.waiting?.includes(t.id) ? 'Waiting for a free slot…' : 'Working on it…'}</span>`,
     done: `<button class="btn small" data-view="${t.id}">View result</button><button class="btn small" data-run="${t.id}">↻ Redo</button>`,
     failed: `<button class="btn small" data-run="${t.id}">↻ Retry</button>`,
   }[t.status];

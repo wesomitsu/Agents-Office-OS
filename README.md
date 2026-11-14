@@ -60,6 +60,10 @@ switch its provider and model.
 | OpenRouter, Groq, Together... | `OPENAI_API_KEY` + `OPENAI_BASE_URL` | set the model on the agent |
 | Ollama (local) | `OPENAI_BASE_URL=http://localhost:11434/v1` | set the model on the agent, e.g. `llama3.1` |
 
+At most 3 tasks call a model at the same time (`MAX_CONCURRENT_TASKS`, `0` for
+no limit); the rest show "Waiting for a free slot" and start as soon as one
+finishes.
+
 If an OpenAI-compatible API is busy (429) or briefly down (5xx), the request is
 retried up to 3 times. The Anthropic SDK has its own retries.
 
