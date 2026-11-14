@@ -5,6 +5,21 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 
 let office = { agents: [], tasks: [], providers: [], company: {} };
 let editingAgent = null;
+let editingTask = null;
+
+// Opens the task form empty (new task) or filled in from a waiting task (edit).
+function openTaskForm(task) {
+  const f = $('#task-form');
+  editingTask = task?.id ?? null;
+  f.reset();
+  $('#task-form h3').textContent = task ? 'Edit task' : 'New task';
+  f.querySelector('button[value=ok]').textContent = task ? 'Save' : 'Create';
+  f.elements.run.closest('label').hidden = Boolean(task);
+  $('#task-dialog').showModal();
+  if (task) {
+    for (const k of ['title', 'details', 'agentId', 'priority', 'due', 'repeat']) f.elements[k].value = task[k] ?? '';
+  }
+}
 let lastJson = '';
 let filter = '';
 let search = '';
@@ -109,7 +124,7 @@ const fmtTokens = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n));
 function card(t) {
   const a = office.agents.find((x) => x.id === t.agentId);
   const buttons = {
-    todo: `<button class="btn small" data-run="${t.id}">▶ Start</button>`,
+    todo: `<button class="btn small" data-run="${t.id}">▶ Start</button><button class="btn small" data-edit="${t.id}" title="Edit">✎</button>`,
     working: `<span class="who">${office.waiting?.includes(t.id) ? 'Waiting for a free slot…' : 'Working on it…'}</span>`,
     done: `<button class="btn small" data-view="${t.id}">View result</button><button class="btn small" data-run="${t.id}">↻ Redo</button>`,
     failed: `<button class="btn small" data-run="${t.id}">↻ Retry</button>`,
@@ -140,11 +155,12 @@ function openAgent(agent) {
 }
 
 document.addEventListener('click', async (e) => {
-  const t = e.target.closest('[data-run],[data-view],[data-delete],[data-dup],[data-agent],#add-agent,#new-task');
+  const t = e.target.closest('[data-run],[data-view],[data-delete],[data-dup],[data-edit],[data-agent],#add-agent,#new-task');
   if (!t) return;
   try {
-    if (t.id === 'new-task') return $('#task-dialog').showModal();
+    if (t.id === 'new-task') return openTaskForm(null);
     if (t.id === 'add-agent') return openAgent(null);
+    if (t.dataset.edit) return openTaskForm(office.tasks.find((x) => x.id === t.dataset.edit));
     if (t.dataset.dup) {
       // Opens the new-task form pre-filled from this task, so it can be tweaked first.
       const src = office.tasks.find((x) => x.id === t.dataset.dup);
@@ -192,7 +208,7 @@ document.addEventListener('keydown', (e) => {
   if (typing || e.metaKey || e.ctrlKey || e.altKey || document.querySelector('dialog[open]')) return;
   if (e.key === 'n') {
     e.preventDefault();
-    $('#task-dialog').showModal();
+    openTaskForm(null);
   } else if (e.key === 'h') {
     e.preventDefault();
     openAgent(null);
@@ -217,8 +233,17 @@ document.addEventListener('keydown', (e) => {
 $('#task-dialog').addEventListener('close', async () => {
   const d = $('#task-dialog');
   const f = $('#task-form');
+  if (d.returnValue !== 'ok') editingTask = null;
   if (d.returnValue === 'ok') {
     try {
+      const fields = { title: f.elements.title.value, details: f.elements.details.value, agentId: f.elements.agentId.value, priority: f.elements.priority.value, due: f.elements.due.value, repeat: f.elements.repeat.value };
+      if (editingTask) {
+        await api('PATCH', `/api/tasks/${editingTask}`, fields);
+        editingTask = null;
+        f.reset();
+        await refresh();
+        return;
+      }
       const task = await api('POST', '/api/tasks', { title: f.elements.title.value, details: f.elements.details.value, agentId: f.elements.agentId.value, priority: f.elements.priority.value, due: f.elements.due.value, repeat: f.elements.repeat.value });
       if (f.elements.run.checked) await api('POST', `/api/tasks/${task.id}/run`);
       f.reset();
