@@ -123,3 +123,31 @@ test('a repeating task queues its next copy when done', async () => {
   assert.equal(s.tasks().length, 2);
   assert.throws(() => s.addTask({ title: 'x', agentId: 'support', repeat: 'hourly' }), /bad repeat/);
 });
+
+test('runs at most maxConcurrent tasks at once', async () => {
+  const s = store();
+  const ids = ['a', 'b', 'c'].map((title) => s.addTask({ title, agentId: 'support' }).id);
+  let live = 0;
+  let peak = 0;
+  const gates = [];
+  const runner = createRunner(s, {
+    maxConcurrent: 2,
+    complete: () => new Promise((resolve) => {
+      live++;
+      peak = Math.max(peak, live);
+      gates.push(() => { live--; resolve({ text: 'ok', usage: { input: 0, output: 0 } }); });
+    }),
+  });
+  const all = ids.map((id) => runner.run(id));
+  await new Promise((r) => setTimeout(r, 10));
+  assert.equal(gates.length, 2);
+  assert.equal(runner.waitingIds().length, 1);
+  assert.equal(s.task(runner.waitingIds()[0]).status, 'working');
+  gates.shift()();
+  await new Promise((r) => setTimeout(r, 10));
+  assert.equal(runner.waitingIds().length, 0);
+  while (gates.length) gates.shift()();
+  await Promise.all(all);
+  assert.equal(peak, 2);
+  assert.ok(ids.every((id) => s.task(id).status === 'done'));
+});

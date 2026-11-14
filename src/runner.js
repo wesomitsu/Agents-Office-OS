@@ -9,11 +9,31 @@ export function buildPrompt(agent, task, company = {}) {
   return { system, prompt };
 }
 
-export function createRunner(store, { complete: call = complete, company = {}, notify = async () => {} } = {}) {
+export function createRunner(store, { complete: call = complete, company = {}, notify = async () => {}, maxConcurrent = 3 } = {}) {
   const running = new Set();
+  // At most `maxConcurrent` model calls at once (0 = no limit), so a burst of
+  // tasks doesn't hit provider rate limits. Others wait for a free slot.
+  const waiting = [];
+  const waitingIds = new Set();
+  let active = 0;
+  async function slot(taskId) {
+    if (!maxConcurrent || active < maxConcurrent) {
+      active++;
+      return;
+    }
+    waitingIds.add(taskId);
+    await new Promise((resolve) => waiting.push(resolve));
+    waitingIds.delete(taskId);
+  }
+  function release() {
+    const next = waiting.shift();
+    if (next) next(); // hand the slot straight to the next task
+    else active--;
+  }
 
   return {
     isRunning: (taskId) => running.has(taskId),
+    waitingIds: () => [...waitingIds],
 
     async run(taskId) {
       const task = store.task(taskId);
@@ -25,6 +45,7 @@ export function createRunner(store, { complete: call = complete, company = {}, n
 
       running.add(taskId);
       store.updateTask(taskId, { status: 'working', error: '', startedAt: new Date().toISOString(), finishedAt: '' });
+      await slot(taskId);
       try {
         const { system, prompt } = buildPrompt(agent, task, company);
         const { text, usage } = await call({ provider: agent.provider, model: agent.model, system, prompt });
@@ -37,6 +58,7 @@ export function createRunner(store, { complete: call = complete, company = {}, n
       } catch (err) {
         return store.updateTask(taskId, { status: 'failed', error: err.message, finishedAt: new Date().toISOString() });
       } finally {
+        release();
         running.delete(taskId);
         store.scheduleNext(taskId);
         notify(store.task(taskId), agent).catch(() => {});
@@ -56,6 +78,7 @@ export function createRunner(store, { complete: call = complete, company = {}, n
       running.add(taskId);
       const history = task.thread;
       store.updateTask(taskId, { status: 'working', error: '', startedAt: new Date().toISOString(), finishedAt: '' });
+      await slot(taskId);
       try {
         const { system } = buildPrompt(agent, task, company);
         const { text, usage } = await call({ provider: agent.provider, model: agent.model, system, prompt: message, history });
@@ -66,6 +89,7 @@ export function createRunner(store, { complete: call = complete, company = {}, n
         // Keep the earlier answer; just report that the follow-up failed.
         return store.updateTask(taskId, { status: 'done', error: `Follow-up failed: ${err.message}`, finishedAt: new Date().toISOString() });
       } finally {
+        release();
         running.delete(taskId);
       }
     },
