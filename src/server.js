@@ -17,7 +17,7 @@ export function createApp({ store, runner, env = process.env }) {
   const company = { name: env.COMPANY_NAME ?? '', about: env.COMPANY_ABOUT ?? '' };
 
   const routes = [
-    ['GET', /^\/api\/office$/, () => ({ company, providers: providerStatus(env), templates: AGENT_TEMPLATES, agents: store.agents(), stats: store.stats(), tasks: store.tasks() })],
+    ['GET', /^\/api\/office$/, () => ({ company, providers: providerStatus(env), templates: AGENT_TEMPLATES, agents: store.agents(), stats: store.stats(), waiting: runner.waitingIds?.() ?? [], tasks: store.tasks() })],
     ['GET', /^\/api\/tasks\.csv$/, () => ({ raw: tasksCsv(store), type: 'text/csv; charset=utf-8', filename: 'agents-office-tasks.csv' })],
     ['GET', /^\/api\/export$/, () => ({ app: 'agents-office-os', version: 1, agents: store.agents() })],
     ['POST', /^\/api\/import$/, (_, body) => ({ agents: store.importAgents(body.agents) })],
@@ -181,6 +181,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const runner = createRunner(store, {
     company: { name: process.env.COMPANY_NAME, about: process.env.COMPANY_ABOUT },
     notify: createNotifier(),
+    maxConcurrent: Number(process.env.MAX_CONCURRENT_TASKS ?? 3),
   });
   const port = Number(process.env.PORT ?? 3000);
   // Bind to localhost only: the office can spend your API credit, so it
