@@ -23,6 +23,10 @@ export function createApp({ store, runner, env = process.env }) {
     ['POST', /^\/api\/import$/, (_, body) => ({ agents: store.importAgents(body.agents) })],
     ['POST', /^\/api\/agents$/, (_, body) => [201, store.addAgent(body)]],
     ['PATCH', /^\/api\/agents\/([\w-]+)$/, ([id], body) => store.updateAgent(id, body)],
+    ['POST', /^\/api\/agents\/([\w-]+)\/clone$/, ([id]) => {
+      const copy = store.cloneAgent(id);
+      return copy ? [201, copy] : null;
+    }],
     [
       'POST',
       /^\/api\/agents\/([\w-]+)\/move$/,
