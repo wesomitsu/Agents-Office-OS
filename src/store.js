@@ -1,5 +1,5 @@
-import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { DEFAULT_AGENTS } from './defaults.js';
 
@@ -16,7 +16,8 @@ function checkDue(due) {
 }
 
 // Keeps the office (agents + tasks) in one JSON file. API keys are never stored here.
-export function createStore(path) {
+// backups: how many daily copies to keep in a backups/ folder next to the file (0 = off).
+export function createStore(path, { backups = 7, today = () => new Date().toISOString().slice(0, 10) } = {}) {
   let state;
   try {
     state = JSON.parse(readFileSync(path, 'utf8'));
@@ -25,7 +26,21 @@ export function createStore(path) {
     state = { agents: structuredClone(DEFAULT_AGENTS), tasks: [] };
   }
 
+  // Before the first change of each day, copy the current file to
+  // backups/office-YYYY-MM-DD.json and drop copies beyond the newest `backups`.
+  function backup() {
+    if (!backups || !existsSync(path)) return;
+    const dir = join(dirname(path), 'backups');
+    const target = join(dir, `office-${today()}.json`);
+    if (existsSync(target)) return;
+    mkdirSync(dir, { recursive: true });
+    copyFileSync(path, target);
+    const old = readdirSync(dir).filter((f) => /^office-\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort();
+    for (const f of old.slice(0, Math.max(0, old.length - backups))) rmSync(join(dir, f));
+  }
+
   function save() {
+    backup();
     mkdirSync(dirname(path), { recursive: true });
     const tmp = `${path}.tmp`;
     writeFileSync(tmp, JSON.stringify(state, null, 2));
