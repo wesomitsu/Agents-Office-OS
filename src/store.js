@@ -79,6 +79,18 @@ export function createStore(path, { backups = 7, today = () => new Date().toISOS
       return a;
     },
 
+    // Copies an agent (same job, provider, model, prices and instructions) and
+    // seats the copy right next to the original.
+    cloneAgent(id) {
+      const i = state.agents.findIndex((a) => a.id === id);
+      if (i < 0) return null;
+      const { id: _old, ...rest } = state.agents[i];
+      const copy = { ...rest, id: randomUUID().slice(0, 8), name: `${rest.name} (copy)` };
+      state.agents.splice(i + 1, 0, copy);
+      save();
+      return copy;
+    },
+
     // Moves a desk one place left (-1) or right (+1) in the office.
     moveAgent(id, step) {
       const i = state.agents.findIndex((a) => a.id === id);
