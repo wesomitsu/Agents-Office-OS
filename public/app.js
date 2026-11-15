@@ -326,6 +326,19 @@ $('#clone-agent').addEventListener('click', async () => {
   }
 });
 
+// Cycles system → light → dark → system; remembered in this browser only.
+$('#theme').addEventListener('click', () => {
+  const order = ['', 'light', 'dark'];
+  const next = order[(order.indexOf(document.documentElement.dataset.theme ?? '') + 1) % order.length];
+  if (next) document.documentElement.dataset.theme = next;
+  else delete document.documentElement.dataset.theme;
+  try {
+    if (next) localStorage.setItem('theme', next);
+    else localStorage.removeItem('theme');
+  } catch {}
+  $('#theme').title = `Theme: ${next || 'system'} (click to switch)`;
+});
+
 $('#clear-done').addEventListener('click', async () => {
   const who = filter ? office.agents.find((a) => a.id === filter)?.name : null;
   const count = office.tasks.filter((t) => t.status === 'done' && (!filter || t.agentId === filter)).length;
