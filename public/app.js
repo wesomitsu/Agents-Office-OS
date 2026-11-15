@@ -146,6 +146,7 @@ function openAgent(agent) {
   $('#agent-delete').hidden = !agent;
   $('#move-left').hidden = !agent;
   $('#move-right').hidden = !agent;
+  $('#clone-agent').hidden = !agent;
   $('#template-row').hidden = Boolean(agent);
   $('#agent-template').innerHTML =
     '<option value="">Blank agent</option>' +
@@ -312,6 +313,18 @@ for (const [btn, direction] of [['#move-left', 'left'], ['#move-right', 'right']
     }
   });
 }
+
+$('#clone-agent').addEventListener('click', async () => {
+  if (!editingAgent) return;
+  try {
+    const copy = await api('POST', `/api/agents/${editingAgent.id}/clone`);
+    $('#agent-dialog').close('cancel');
+    await refresh();
+    openAgent(office.agents.find((a) => a.id === copy.id)); // straight into editing the copy
+  } catch (err) {
+    alert(err.message);
+  }
+});
 
 $('#clear-done').addEventListener('click', async () => {
   const who = filter ? office.agents.find((a) => a.id === filter)?.name : null;
