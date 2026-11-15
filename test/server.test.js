@@ -180,3 +180,18 @@ test('rearranges desks', async () => {
     assert.equal(office.agents[3].id, 'support');
   });
 });
+
+test('copies an agent', async () => {
+  await withServer(async (api) => {
+    await api('PATCH', '/api/agents/bugs', { model: 'claude-opus-5-5', priceIn: '4' });
+    const r = await api('POST', '/api/agents/bugs/clone');
+    assert.equal(r.status, 201);
+    assert.equal(r.data.name, 'Bolt (copy)');
+    assert.equal(r.data.model, 'claude-opus-5-5');
+    assert.equal(r.data.priceIn, '4');
+    assert.notEqual(r.data.id, 'bugs');
+    const ids = (await api('GET', '/api/office')).data.agents.map((a) => a.id);
+    assert.equal(ids[ids.indexOf('bugs') + 1], r.data.id); // placed right after the original
+    assert.equal((await api('POST', '/api/agents/ghost/clone')).status, 404);
+  });
+});
