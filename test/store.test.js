@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createStore } from '../src/store.js';
@@ -81,4 +81,32 @@ test('a task can be edited before it runs', () => {
   assert.throws(() => store.updateTask(t.id, { agentId: 'ghost' }), /unknown agent/);
   assert.throws(() => store.updateTask(t.id, { repeat: 'hourly' }), /bad repeat/);
   assert.throws(() => store.updateTask(t.id, { title: '  ' }), /title is required/);
+});
+
+test('keeps one backup per day and only the last 7', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'office-'));
+  const file = join(dir, 'office.json');
+  let day = 1;
+  const store = createStore(file, { backups: 7, today: () => `2026-11-${String(day).padStart(2, '0')}` });
+  store.addTask({ title: 'first save creates the file', agentId: 'support' });
+  for (day = 2; day <= 12; day++) {
+    store.addTask({ title: `day ${day}`, agentId: 'support' });
+    store.addTask({ title: `again ${day}`, agentId: 'support' }); // second save the same day: no new backup
+  }
+  const backups = readdirSync(join(dir, 'backups')).sort();
+  assert.equal(backups.length, 7);
+  assert.equal(backups[0], 'office-2026-11-06.json');
+  assert.equal(backups.at(-1), 'office-2026-11-12.json');
+  // a backup holds the office as it was before that day's first change
+  const last = JSON.parse(readFileSync(join(dir, 'backups', 'office-2026-11-12.json'), 'utf8'));
+  assert.ok(last.tasks.some((t) => t.title === 'again 11'));
+  assert.ok(!last.tasks.some((t) => t.title === 'day 12'));
+});
+
+test('backups can be turned off', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'office-'));
+  const store = createStore(join(dir, 'office.json'), { backups: 0 });
+  store.addTask({ title: 'a', agentId: 'support' });
+  store.addTask({ title: 'b', agentId: 'support' });
+  assert.ok(!existsSync(join(dir, 'backups')));
 });
