@@ -116,7 +116,9 @@ work for.
 ## How it works
 
 - `src/server.js`: a small HTTP server for the page and a JSON API
-- `src/store.js`: agents and tasks, saved to `data/office.json` (git-ignored)
+- `src/store.js`: agents and tasks, saved to `data/office.json` (git-ignored), with a
+  daily copy in `data/backups/` (the last 7 are kept; `OFFICE_BACKUPS` changes that, `0` turns it off).
+  To restore, stop the server and copy a backup over `data/office.json`.
 - `src/providers.js`: calls Anthropic through the official SDK, or any OpenAI-compatible `/chat/completions` endpoint
 - `src/runner.js`: builds each agent's prompt and records the result on the task
 - `public/`: the office page, plain HTML, CSS and JavaScript

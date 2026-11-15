@@ -186,7 +186,9 @@ async function serveStatic(pathname, res) {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const store = createStore(process.env.OFFICE_DATA ?? join(root, 'data', 'office.json'));
+  const store = createStore(process.env.OFFICE_DATA ?? join(root, 'data', 'office.json'), {
+    backups: Number(process.env.OFFICE_BACKUPS ?? 7),
+  });
   const runner = createRunner(store, {
     company: { name: process.env.COMPANY_NAME, about: process.env.COMPANY_ABOUT },
     notify: createNotifier(),
