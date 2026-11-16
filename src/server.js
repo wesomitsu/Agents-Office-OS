@@ -14,6 +14,11 @@ const PUBLIC = join(root, 'public');
 const TYPES = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.svg': 'image/svg+xml', '.png': 'image/png' };
 
 export function createApp({ store, runner, env = process.env }) {
+  // Wrong-password tracking per address: 10 misses within 15 minutes locks that
+  // address out for 15 minutes, which makes guessing OFFICE_PASSWORD impractical.
+  const misses = new Map();
+  const LOCK_MS = 15 * 60_000;
+  const MAX_MISSES = 10;
   const company = { name: env.COMPANY_NAME ?? '', about: env.COMPANY_ABOUT ?? '' };
 
   const routes = [
@@ -116,9 +121,26 @@ export function createApp({ store, runner, env = process.env }) {
     // Health check for Docker and uptime monitors. Says nothing about the office,
     // so it's safe to leave outside the password.
     if (req.method === 'GET' && req.url === '/api/health') return send(res, 200, { ok: true });
-    if (env.OFFICE_PASSWORD && !authorized(req, env.OFFICE_PASSWORD)) {
-      res.writeHead(401, { 'WWW-Authenticate': 'Basic realm="Agents Office", charset="UTF-8"' });
-      return res.end('Login required');
+    if (env.OFFICE_PASSWORD) {
+      const ip = req.socket?.remoteAddress ?? '';
+      const now = Date.now();
+      const m = misses.get(ip);
+      if (m && m.lockedUntil > now) {
+        res.writeHead(429, { 'Retry-After': String(Math.ceil((m.lockedUntil - now) / 1000)) });
+        return res.end('Too many wrong passwords. Try again later.');
+      }
+      if (!authorized(req, env.OFFICE_PASSWORD)) {
+        // Browsers first ask without credentials; only count real wrong attempts.
+        if (req.headers.authorization) {
+          const rec = m && now - m.first < LOCK_MS ? m : { count: 0, first: now, lockedUntil: 0 };
+          rec.count++;
+          if (rec.count >= MAX_MISSES) rec.lockedUntil = now + LOCK_MS;
+          misses.set(ip, rec);
+        }
+        res.writeHead(401, { 'WWW-Authenticate': 'Basic realm="Agents Office", charset="UTF-8"' });
+        return res.end('Login required');
+      }
+      misses.delete(ip);
     }
     const url = new URL(req.url, 'http://localhost');
     try {

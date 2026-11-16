@@ -222,3 +222,26 @@ test('sends one task to every on-duty agent', async () => {
     assert.equal((await api('POST', '/api/tasks/broadcast', { title: '' })).status, 400);
   });
 });
+
+test('locks out an address after repeated wrong passwords', async () => {
+  await withServer(async (_, base) => {
+    const bad = { Authorization: `Basic ${Buffer.from('x:wrong').toString('base64')}` };
+    const good = { Authorization: `Basic ${Buffer.from('x:pw').toString('base64')}` };
+    for (let i = 0; i < 10; i++) assert.equal((await fetch(`${base}/api/office`, { headers: bad })).status, 401);
+    const locked = await fetch(`${base}/api/office`, { headers: good });
+    assert.equal(locked.status, 429);
+    assert.ok(Number(locked.headers.get('retry-after')) > 0);
+    assert.equal((await fetch(`${base}/api/health`)).status, 200);
+  }, { OFFICE_PASSWORD: 'pw' });
+});
+
+test('a correct password clears earlier failures', async () => {
+  await withServer(async (_, base) => {
+    const bad = { Authorization: `Basic ${Buffer.from('x:wrong').toString('base64')}` };
+    const good = { Authorization: `Basic ${Buffer.from('x:pw').toString('base64')}` };
+    for (let i = 0; i < 9; i++) await fetch(`${base}/api/office`, { headers: bad });
+    assert.equal((await fetch(`${base}/api/office`, { headers: good })).status, 200);
+    for (let i = 0; i < 9; i++) await fetch(`${base}/api/office`, { headers: bad });
+    assert.equal((await fetch(`${base}/api/office`, { headers: good })).status, 200);
+  }, { OFFICE_PASSWORD: 'pw' });
+});
