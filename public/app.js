@@ -179,7 +179,11 @@ document.addEventListener('click', async (e) => {
     }
     if (t.dataset.agent) return openAgent(office.agents.find((a) => a.id === t.dataset.agent));
     if (t.dataset.run) await api('POST', `/api/tasks/${t.dataset.run}/run`);
-    if (t.dataset.delete) await api('DELETE', `/api/tasks/${t.dataset.delete}`);
+    if (t.dataset.delete) {
+      const gone = office.tasks.find((x) => x.id === t.dataset.delete);
+      await api('DELETE', `/api/tasks/${t.dataset.delete}`);
+      showUndo(gone);
+    }
     if (t.dataset.view) {
       const task = office.tasks.find((x) => x.id === t.dataset.view);
       $('#output-title').textContent = task.title;
@@ -337,6 +341,28 @@ $('#theme').addEventListener('click', () => {
     else localStorage.removeItem('theme');
   } catch {}
   $('#theme').title = `Theme: ${next || 'system'} (click to switch)`;
+});
+
+// A short "Task deleted · Undo" bar after deleting a task.
+let undoTimer;
+let undoId = null;
+function showUndo(task) {
+  if (!task) return;
+  undoId = task.id;
+  $('#toast-text').textContent = `Deleted "${task.title}"`;
+  $('#toast').hidden = false;
+  clearTimeout(undoTimer);
+  undoTimer = setTimeout(() => ($('#toast').hidden = true), 8000);
+}
+$('#toast-undo').addEventListener('click', async () => {
+  $('#toast').hidden = true;
+  if (!undoId) return;
+  try {
+    await api('POST', `/api/tasks/${undoId}/restore`);
+    await refresh();
+  } catch (err) {
+    alert(err.message);
+  }
 });
 
 $('#clear-done').addEventListener('click', async () => {
