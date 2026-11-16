@@ -12,6 +12,7 @@ them work, and read what they hand back.
 - **Task board**: to do, working, done and needs attention, updated live, with high-priority tasks on top and overdue tasks flagged
 - **Readable results**: formatted output you can copy or download as Markdown, or export every task as CSV
 - **Edit**: change a waiting task's title, details, agent, priority, due date or repeat before it runs
+- **Undo**: deleted a task by mistake? Click Undo in the bar that appears
 - **Duplicate**: copy any task into the new-task form to tweak and reuse it
 - **Repeating tasks**: set a task to repeat daily or weekly and the next one is queued when it's done
 - **Follow-ups**: reply to a finished task ("make it shorter") and the agent revises it, keeping the conversation
@@ -135,6 +136,7 @@ work for.
 | `POST` | `/api/tasks/:id/handoff` | Pass a finished result to another agent `{ agentId, note, run }` |
 | `POST` | `/api/tasks/:id/reply` | Send a follow-up `{ message }` on a finished task |
 | `PATCH`/`DELETE` | `/api/tasks/:id` | Edit or delete a task |
+| `POST` | `/api/tasks/:id/restore` | Undo a delete (the last 20 deleted tasks are kept) |
 | `POST` | `/api/tasks/start-all` | Start every waiting task `{ agentId? }` (off-duty agents are skipped) |
 | `POST` | `/api/tasks/clear-done` | Delete finished tasks `{ agentId? }` |
 | `GET` | `/api/tasks.csv` | Download every task as a spreadsheet |

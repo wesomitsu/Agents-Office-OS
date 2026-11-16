@@ -241,11 +241,23 @@ export function createStore(path, { backups = 7, today = () => new Date().toISOS
       return this.addTask({ title: t.title, details: t.details, agentId: t.agentId, priority: t.priority, repeat: t.repeat, due: base.toISOString().slice(0, 10) });
     },
 
+    // Deleted tasks go to a small trash (the 20 most recent) so they can be undone.
     removeTask(id) {
-      const before = state.tasks.length;
-      state.tasks = state.tasks.filter((t) => t.id !== id);
+      const t = state.tasks.find((x) => x.id === id);
+      if (!t) return false;
+      state.tasks = state.tasks.filter((x) => x.id !== id);
+      state.trash = [t, ...(state.trash ?? [])].slice(0, 20);
       save();
-      return state.tasks.length < before;
+      return true;
+    },
+
+    restoreTask(id) {
+      const t = (state.trash ?? []).find((x) => x.id === id);
+      if (!t) return null;
+      state.trash = state.trash.filter((x) => x.id !== id);
+      state.tasks.unshift(t);
+      save();
+      return t;
     },
   };
 }
