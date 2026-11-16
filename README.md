@@ -151,7 +151,9 @@ work for.
 - The server listens on `localhost` only by default. Anyone who can open the
   office can spend your API credit, so set `OFFICE_PASSWORD` (the browser asks
   for it, any username works) before setting `HOST=0.0.0.0` or deploying, and
-  serve it over HTTPS.
+  serve it over HTTPS. Ten wrong passwords from one address within 15 minutes
+  lock that address out for 15 minutes. Behind a proxy every visitor shares the
+  proxy's address, so put the proxy's own login or rate limit in front too.
 - Agents write drafts. They don't post, send emails or change your website by
   themselves; you review the result and use it.
 
