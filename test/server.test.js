@@ -208,3 +208,17 @@ test('a deleted task can be restored', async () => {
     assert.equal((await api('POST', `/api/tasks/${t.id}/restore`)).status, 404); // only once
   });
 });
+
+test('sends one task to every on-duty agent', async () => {
+  await withServer(async (api) => {
+    await api('PATCH', '/api/agents/bugs', { offDuty: 'true' });
+    const r = await api('POST', '/api/tasks/broadcast', { title: 'Ideas for our launch?', priority: 'high' });
+    assert.equal(r.status, 201);
+    assert.equal(r.data.tasks.length, 4);
+    assert.ok(!r.data.tasks.some((t) => t.agentId === 'bugs'));
+    assert.ok(r.data.tasks.every((t) => t.title === 'Ideas for our launch?' && t.priority === 'high'));
+    const some = await api('POST', '/api/tasks/broadcast', { title: 'x', agentIds: ['social', 'web'] });
+    assert.deepEqual(some.data.tasks.map((t) => t.agentId), ['social', 'web']);
+    assert.equal((await api('POST', '/api/tasks/broadcast', { title: '' })).status, 400);
+  });
+});
