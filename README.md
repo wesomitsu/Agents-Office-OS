@@ -14,6 +14,7 @@ them work, and read what they hand back.
 - **Edit**: change a waiting task's title, details, agent, priority, due date or repeat before it runs
 - **Undo**: deleted a task by mistake? Click Undo in the bar that appears
 - **Duplicate**: copy any task into the new-task form to tweak and reuse it
+- **Ask everyone**: pick "📢 Everyone on duty" to give the same task to every agent and compare their answers
 - **Repeating tasks**: set a task to repeat daily or weekly and the next one is queued when it's done
 - **Follow-ups**: reply to a finished task ("make it shorter") and the agent revises it, keeping the conversation
 - **Hand-offs**: pass a result to another agent, e.g. Marketing's campaign to Social Media for posts
@@ -137,6 +138,7 @@ work for.
 | `POST` | `/api/tasks/:id/reply` | Send a follow-up `{ message }` on a finished task |
 | `PATCH`/`DELETE` | `/api/tasks/:id` | Edit or delete a task |
 | `POST` | `/api/tasks/:id/restore` | Undo a delete (the last 20 deleted tasks are kept) |
+| `POST` | `/api/tasks/broadcast` | One task per agent `{ title, ..., agentIds?, run? }` (default: everyone on duty) |
 | `POST` | `/api/tasks/start-all` | Start every waiting task `{ agentId? }` (off-duty agents are skipped) |
 | `POST` | `/api/tasks/clear-done` | Delete finished tasks `{ agentId? }` |
 | `GET` | `/api/tasks.csv` | Download every task as a spreadsheet |
