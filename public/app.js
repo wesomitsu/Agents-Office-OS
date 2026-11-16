@@ -91,7 +91,7 @@ function render() {
 
   // Don't touch the form lists while someone is filling a form in.
   if (document.querySelector('dialog[open]')) return;
-  $('#task-agent').innerHTML = agents.map((a) => `<option value="${esc(a.id)}">${esc(a.emoji)} ${esc(a.name)} · ${esc(a.role)}</option>`).join('');
+  $('#task-agent').innerHTML = agents.map((a) => `<option value="${esc(a.id)}">${esc(a.emoji)} ${esc(a.name)} · ${esc(a.role)}</option>`).join('') + '<option value="__all__">📢 Everyone on duty (one task each)</option>';
   $('#agent-provider').innerHTML = providers.map((p) => `<option value="${esc(p.id)}">${esc(p.label)}${p.configured ? '' : ' (no key yet)'}</option>`).join('');
 }
 
@@ -247,6 +247,13 @@ $('#task-dialog').addEventListener('close', async () => {
       if (editingTask) {
         await api('PATCH', `/api/tasks/${editingTask}`, fields);
         editingTask = null;
+        f.reset();
+        await refresh();
+        return;
+      }
+      if (fields.agentId === '__all__') {
+        const { agentId: _a, ...rest } = fields;
+        await api('POST', '/api/tasks/broadcast', { ...rest, run: f.elements.run.checked });
         f.reset();
         await refresh();
         return;

@@ -41,6 +41,21 @@ export function createApp({ store, runner, env = process.env }) {
     ['PATCH', /^\/api\/tasks\/([\w-]+)$/, ([id], body) => store.updateTask(id, body)],
     [
       'POST',
+      /^\/api\/tasks\/broadcast$/,
+      (_, body) => {
+        // The same request for several agents at once (default: everyone on duty).
+        if (!String(body.title ?? '').trim()) throw new Error('title is required');
+        const ids = Array.isArray(body.agentIds) && body.agentIds.length
+          ? body.agentIds
+          : store.agents().filter((a) => a.offDuty !== 'true').map((a) => a.id);
+        const { agentIds: _ignored, run: _run, ...fields } = body;
+        const tasks = ids.map((agentId) => store.addTask({ ...fields, agentId }));
+        if (body.run) for (const t of tasks) runner.run(t.id).catch(() => {});
+        return [201, { tasks }];
+      },
+    ],
+    [
+      'POST',
       /^\/api\/tasks\/start-all$/,
       (_, body) => {
         // Starts every waiting task (optionally one agent's), skipping off-duty agents.
