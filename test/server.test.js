@@ -195,3 +195,16 @@ test('copies an agent', async () => {
     assert.equal((await api('POST', '/api/agents/ghost/clone')).status, 404);
   });
 });
+
+test('a deleted task can be restored', async () => {
+  await withServer(async (api) => {
+    const t = (await api('POST', '/api/tasks', { title: 'Oops', agentId: 'support' })).data;
+    assert.equal((await api('DELETE', `/api/tasks/${t.id}`)).status, 200);
+    assert.equal((await api('GET', '/api/office')).data.tasks.length, 0);
+    const r = await api('POST', `/api/tasks/${t.id}/restore`);
+    assert.equal(r.status, 200);
+    assert.equal(r.data.title, 'Oops');
+    assert.equal((await api('GET', '/api/office')).data.tasks.length, 1);
+    assert.equal((await api('POST', `/api/tasks/${t.id}/restore`)).status, 404); // only once
+  });
+});

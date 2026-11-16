@@ -110,3 +110,11 @@ test('backups can be turned off', () => {
   store.addTask({ title: 'b', agentId: 'support' });
   assert.ok(!existsSync(join(dir, 'backups')));
 });
+
+test('the trash keeps only the 20 most recent deletions', () => {
+  const store = createStore(tmpFile());
+  const ids = Array.from({ length: 25 }, (_, i) => store.addTask({ title: `t${i}`, agentId: 'support' }).id);
+  for (const id of ids) store.removeTask(id);
+  assert.equal(store.restoreTask(ids[0]), null);
+  assert.equal(store.restoreTask(ids[24]).title, 't24');
+});
