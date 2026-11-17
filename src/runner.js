@@ -49,7 +49,7 @@ export function createRunner(store, { complete: call = complete, company = {}, n
       await slot(taskId);
       try {
         const { system, prompt } = buildPrompt(agent, task, typeof company === 'function' ? company() : company);
-        const { text, usage } = await call({ provider: agent.provider, model: agent.model, system, prompt });
+        const { text, usage } = await call({ provider: agent.provider, model: task.model || agent.model, system, prompt });
         store.addUsage(taskId, usage);
         store.setThread(taskId, [
           { role: 'user', content: prompt },
@@ -82,7 +82,7 @@ export function createRunner(store, { complete: call = complete, company = {}, n
       await slot(taskId);
       try {
         const { system } = buildPrompt(agent, task, typeof company === 'function' ? company() : company);
-        const { text, usage } = await call({ provider: agent.provider, model: agent.model, system, prompt: message, history });
+        const { text, usage } = await call({ provider: agent.provider, model: task.model || agent.model, system, prompt: message, history });
         store.addUsage(taskId, usage);
         store.setThread(taskId, [...history, { role: 'user', content: message }, { role: 'assistant', content: text }]);
         return store.updateTask(taskId, { status: 'done', output: text, finishedAt: new Date().toISOString() });
