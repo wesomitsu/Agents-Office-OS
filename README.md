@@ -120,6 +120,7 @@ work for.
 | `f` | Jump to the board filter |
 | `/` | Search tasks (title, details and results) |
 | `1`–`9` | Show one agent's tasks (`0` for everyone) |
+| `Ctrl`/`⌘` + `Enter` | Submit the open form (create, save, send a follow-up) |
 | `?` | Show the shortcuts |
 
 ## How it works
