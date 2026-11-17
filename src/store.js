@@ -124,6 +124,22 @@ export function createStore(path, { backups = 7, today = () => new Date().toISOS
       return agents;
     },
 
+    // Who the agents work for. Saved with the office; .env values are only defaults.
+    company: () => state.company ?? {},
+    setCompany(input) {
+      const limits = { name: 100, about: 300, brief: 4000 };
+      const next = { ...(state.company ?? {}) };
+      for (const [k, max] of Object.entries(limits)) {
+        if (!(k in input)) continue;
+        const v = String(input[k] ?? '').trim();
+        if (v.length > max) throw new Error(`${k} must be at most ${max} characters`);
+        next[k] = v;
+      }
+      state.company = next;
+      save();
+      return next;
+    },
+
     tasks: () => state.tasks,
     task: (id) => state.tasks.find((t) => t.id === id),
 
