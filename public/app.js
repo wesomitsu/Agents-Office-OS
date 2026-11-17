@@ -372,6 +372,22 @@ $('#toast-undo').addEventListener('click', async () => {
   }
 });
 
+$('#company').addEventListener('click', () => {
+  const f = $('#company-form');
+  for (const k of ['name', 'about', 'brief']) f.elements[k].value = office.company?.[k] ?? '';
+  $('#company-dialog').showModal();
+});
+$('#company-dialog').addEventListener('close', async () => {
+  if ($('#company-dialog').returnValue !== 'ok') return;
+  const f = $('#company-form');
+  try {
+    await api('PUT', '/api/company', Object.fromEntries(['name', 'about', 'brief'].map((k) => [k, f.elements[k].value])));
+    await refresh();
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
 $('#clear-done').addEventListener('click', async () => {
   const who = filter ? office.agents.find((a) => a.id === filter)?.name : null;
   const count = office.tasks.filter((t) => t.status === 'done' && (!filter || t.agentId === filter)).length;
