@@ -245,3 +245,13 @@ test('a correct password clears earlier failures', async () => {
     assert.equal((await fetch(`${base}/api/office`, { headers: good })).status, 200);
   }, { OFFICE_PASSWORD: 'pw' });
 });
+
+test('the company profile can be edited and reaches the agents', async () => {
+  await withServer(async (api) => {
+    assert.equal((await api('GET', '/api/office')).data.company.name, '');
+    const r = await api('PUT', '/api/company', { name: 'Acme', about: 'garden tools', brief: 'Tone: friendly. Never promise refunds.' });
+    assert.equal(r.status, 200);
+    assert.deepEqual((await api('GET', '/api/office')).data.company, { name: 'Acme', about: 'garden tools', brief: 'Tone: friendly. Never promise refunds.' });
+    assert.equal((await api('PUT', '/api/company', { brief: 'x'.repeat(4001) })).status, 400);
+  });
+});
