@@ -208,6 +208,16 @@ document.addEventListener('click', async (e) => {
   }
 });
 
+// Ctrl+Enter / Cmd+Enter submits the open form (handy while typing in a textarea).
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' || !(e.ctrlKey || e.metaKey)) return;
+  const form = document.querySelector('dialog[open] form');
+  const ok = form?.querySelector('button[value=ok]') ?? form?.querySelector('#send-reply');
+  if (!ok) return;
+  e.preventDefault();
+  form.requestSubmit(ok);
+});
+
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && e.target.dataset?.agent) return openAgent(office.agents.find((a) => a.id === e.target.dataset.agent));
   // Single-key shortcuts, ignored while typing or when a dialog is open.
