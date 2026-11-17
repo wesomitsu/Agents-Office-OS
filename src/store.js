@@ -15,6 +15,13 @@ function checkDue(due) {
   return d;
 }
 
+// Optional per-task model, used instead of the agent's for that one task.
+function checkModel(model) {
+  const m = String(model ?? '').trim();
+  if (m.length > 100) throw new Error('model name is too long');
+  return m;
+}
+
 // Keeps the office (agents + tasks) in one JSON file. API keys are never stored here.
 // backups: how many daily copies to keep in a backups/ folder next to the file (0 = off).
 export function createStore(path, { backups = 7, today = () => new Date().toISOString().slice(0, 10) } = {}) {
@@ -143,8 +150,9 @@ export function createStore(path, { backups = 7, today = () => new Date().toISOS
     tasks: () => state.tasks,
     task: (id) => state.tasks.find((t) => t.id === id),
 
-    addTask({ title, details = '', agentId, priority = 'normal', due = '', repeat = '' }) {
+    addTask({ title, details = '', agentId, priority = 'normal', due = '', repeat = '', model = '' }) {
       due = checkDue(due);
+      model = checkModel(model);
       if (!REPEATS.has(repeat)) throw new Error(`bad repeat "${repeat}" (use daily or weekly)`);
       if (!PRIORITIES.has(priority)) throw new Error(`bad priority "${priority}"`);
       if (!title) throw new Error('title is required');
@@ -157,6 +165,7 @@ export function createStore(path, { backups = 7, today = () => new Date().toISOS
         priority,
         due,
         repeat,
+        model,
         status: 'todo',
         output: '',
         error: '',
@@ -202,11 +211,12 @@ export function createStore(path, { backups = 7, today = () => new Date().toISOS
       if (!t) return null;
       if (changes.status && !STATUSES.has(changes.status)) throw new Error(`bad status "${changes.status}"`);
       if ('due' in changes) changes = { ...changes, due: checkDue(changes.due) };
+      if ('model' in changes) changes = { ...changes, model: checkModel(changes.model) };
       if ('repeat' in changes && !REPEATS.has(changes.repeat)) throw new Error(`bad repeat "${changes.repeat}" (use daily or weekly)`);
       if ('agentId' in changes && !agent(changes.agentId)) throw new Error(`unknown agent "${changes.agentId}"`);
       if ('title' in changes && !String(changes.title).trim()) throw new Error('title is required');
       if (changes.priority && !PRIORITIES.has(changes.priority)) throw new Error(`bad priority "${changes.priority}"`);
-      for (const k of ['status', 'priority', 'due', 'repeat', 'agentId', 'output', 'error', 'title', 'details', 'startedAt', 'finishedAt']) if (k in changes) t[k] = String(changes[k]);
+      for (const k of ['status', 'priority', 'due', 'repeat', 'agentId', 'model', 'output', 'error', 'title', 'details', 'startedAt', 'finishedAt']) if (k in changes) t[k] = String(changes[k]);
       t.updatedAt = new Date().toISOString();
       save();
       return t;
@@ -254,7 +264,7 @@ export function createStore(path, { backups = 7, today = () => new Date().toISOS
       const base = t.due ? new Date(`${t.due}T00:00:00Z`) : new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00Z');
       base.setUTCDate(base.getUTCDate() + days);
       t.nextCreated = true;
-      return this.addTask({ title: t.title, details: t.details, agentId: t.agentId, priority: t.priority, repeat: t.repeat, due: base.toISOString().slice(0, 10) });
+      return this.addTask({ title: t.title, details: t.details, agentId: t.agentId, priority: t.priority, repeat: t.repeat, model: t.model, due: base.toISOString().slice(0, 10) });
     },
 
     // Deleted tasks go to a small trash (the 20 most recent) so they can be undone.

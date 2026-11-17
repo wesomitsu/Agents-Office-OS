@@ -170,3 +170,14 @@ test('the runner reads the company fresh for each task', async () => {
   assert.match(seen[0], /at Old/);
   assert.match(seen[1], /at New/);
 });
+
+test('a task can use a different model than its agent', async () => {
+  const s = store();
+  s.updateAgent('bugs', { provider: 'demo', model: 'everyday-model' });
+  const seen = [];
+  const runner = createRunner(s, { complete: async (req) => (seen.push(req.model), { text: 'ok', usage: { input: 0, output: 0 } }) });
+  await runner.run(s.addTask({ title: 'hard bug', agentId: 'bugs', model: 'strong-model' }).id);
+  await runner.run(s.addTask({ title: 'easy bug', agentId: 'bugs' }).id);
+  assert.deepEqual(seen, ['strong-model', 'everyday-model']);
+  assert.throws(() => s.addTask({ title: 'x', agentId: 'bugs', model: 'x'.repeat(101) }), /model name is too long/);
+});
