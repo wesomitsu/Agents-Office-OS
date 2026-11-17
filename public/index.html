@@ -10,7 +10,7 @@
 </head>
 <body>
   <header class="topbar">
-    <div class="brand"><span class="logo">🏢</span><div><h1>Agents Office OS</h1><p id="company">Your AI team</p></div></div>
+    <div class="brand"><span class="logo">🏢</span><div><h1>Agents Office OS</h1><button class="linkish company-link" id="company" title="Edit the company profile your agents work with">Your AI team</button></div></div>
     <div class="top-right">
       <div id="providers" class="providers"></div>
       <button class="btn theme-toggle" id="theme" title="Switch light / dark theme" aria-label="Switch theme">🌓</button>
@@ -87,6 +87,17 @@
       <label class="check"><input type="checkbox" name="offDuty"> Off duty (takes no new tasks)</label>
       <p class="hint">Prices are optional and only used to estimate what each agent has spent; copy them from your provider's pricing page. API keys live in your <code>.env</code> file, never in the office.</p>
       <div class="actions"><button value="delete" class="btn danger" id="agent-delete" formnovalidate>Remove</button><button type="button" class="btn" id="move-left" title="Move desk left">◀</button><button type="button" class="btn" id="move-right" title="Move desk right">▶</button><button type="button" class="btn" id="clone-agent" title="Hire a copy of this agent">Copy</button><span></span><button value="cancel" class="btn" formnovalidate>Cancel</button><button value="ok" class="btn primary">Save</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="company-dialog">
+    <form method="dialog" id="company-form">
+      <h3>Company profile</h3>
+      <label>Company name<input name="name" maxlength="100" placeholder="Acme Studio"></label>
+      <label>What you do<input name="about" maxlength="300" placeholder="handmade garden tools, sold online"></label>
+      <label>Brief for every agent<textarea name="brief" rows="6" maxlength="4000" placeholder="Tone of voice, products, audience, things to never say…"></textarea></label>
+      <p class="hint">Added to every agent's instructions. Don't put passwords or keys here.</p>
+      <div class="actions"><button value="cancel" class="btn" formnovalidate>Cancel</button><button value="ok" class="btn primary">Save</button></div>
     </form>
   </dialog>
 

@@ -98,6 +98,11 @@ Use **Export team** to save your agents (names, jobs, providers, models and
 instructions; never keys) to a file, and **Import team** to load them on another
 machine or share a setup.
 
+Click the line under the title to edit the **company profile**: name, what you
+do, and a brief (tone of voice, products, things to never say) that's added to
+every agent's instructions. `COMPANY_NAME` and `COMPANY_ABOUT` in `.env` are only
+the starting values.
+
 Set `NOTIFY_WEBHOOK_URL` to a Slack or Discord incoming-webhook URL and the
 office posts a message (with a preview of the result) whenever a task finishes
 or fails.
@@ -142,6 +147,7 @@ work for.
 | `POST` | `/api/tasks/start-all` | Start every waiting task `{ agentId? }` (off-duty agents are skipped) |
 | `POST` | `/api/tasks/clear-done` | Delete finished tasks `{ agentId? }` |
 | `GET` | `/api/tasks.csv` | Download every task as a spreadsheet |
+| `PUT` | `/api/company` | Save the company profile `{ name, about, brief }` |
 | `GET`/`POST` | `/api/export`, `/api/import` | Save or load the team `{ agents }` |
 | `POST` | `/api/agents` | Hire an agent |
 | `PATCH`/`DELETE` | `/api/agents/:id` | Edit or remove an agent |

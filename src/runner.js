@@ -4,7 +4,8 @@ import { complete } from './providers.js';
 // records the result on the task.
 export function buildPrompt(agent, task, company = {}) {
   const about = company.name ? ` at ${company.name}${company.about ? ` (${company.about})` : ''}` : '';
-  const system = `You are ${agent.name}, the ${agent.role} agent${about}.\n\n${agent.instructions}`.trim();
+  const brief = company.brief ? `\n\nAbout the company:\n${company.brief}` : '';
+  const system = `You are ${agent.name}, the ${agent.role} agent${about}.\n\n${agent.instructions}${brief}`.trim();
   const prompt = task.details ? `${task.title}\n\n${task.details}` : task.title;
   return { system, prompt };
 }
@@ -47,7 +48,7 @@ export function createRunner(store, { complete: call = complete, company = {}, n
       store.updateTask(taskId, { status: 'working', error: '', startedAt: new Date().toISOString(), finishedAt: '' });
       await slot(taskId);
       try {
-        const { system, prompt } = buildPrompt(agent, task, company);
+        const { system, prompt } = buildPrompt(agent, task, typeof company === 'function' ? company() : company);
         const { text, usage } = await call({ provider: agent.provider, model: agent.model, system, prompt });
         store.addUsage(taskId, usage);
         store.setThread(taskId, [
@@ -80,7 +81,7 @@ export function createRunner(store, { complete: call = complete, company = {}, n
       store.updateTask(taskId, { status: 'working', error: '', startedAt: new Date().toISOString(), finishedAt: '' });
       await slot(taskId);
       try {
-        const { system } = buildPrompt(agent, task, company);
+        const { system } = buildPrompt(agent, task, typeof company === 'function' ? company() : company);
         const { text, usage } = await call({ provider: agent.provider, model: agent.model, system, prompt: message, history });
         store.addUsage(taskId, usage);
         store.setThread(taskId, [...history, { role: 'user', content: message }, { role: 'assistant', content: text }]);

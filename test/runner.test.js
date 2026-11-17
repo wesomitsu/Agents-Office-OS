@@ -151,3 +151,22 @@ test('runs at most maxConcurrent tasks at once', async () => {
   assert.equal(peak, 2);
   assert.ok(ids.every((id) => s.task(id).status === 'done'));
 });
+
+test('the company brief is added to every agent prompt', () => {
+  const s = store();
+  const { system } = buildPrompt(s.agent('support'), { title: 'Hi' }, { name: 'Acme', about: 'tools', brief: 'Never promise refunds.' });
+  assert.match(system, /at Acme \(tools\)/);
+  assert.match(system, /About the company:\nNever promise refunds\.$/);
+});
+
+test('the runner reads the company fresh for each task', async () => {
+  const s = store();
+  let company = { name: 'Old' };
+  const seen = [];
+  const runner = createRunner(s, { company: () => company, complete: async (req) => (seen.push(req.system), { text: 'ok', usage: { input: 0, output: 0 } }) });
+  await runner.run(s.addTask({ title: 'a', agentId: 'support' }).id);
+  company = { name: 'New' };
+  await runner.run(s.addTask({ title: 'b', agentId: 'support' }).id);
+  assert.match(seen[0], /at Old/);
+  assert.match(seen[1], /at New/);
+});

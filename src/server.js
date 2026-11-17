@@ -19,11 +19,13 @@ export function createApp({ store, runner, env = process.env }) {
   const misses = new Map();
   const LOCK_MS = 15 * 60_000;
   const MAX_MISSES = 10;
-  const company = { name: env.COMPANY_NAME ?? '', about: env.COMPANY_ABOUT ?? '' };
+  // Saved profile wins; COMPANY_NAME / COMPANY_ABOUT in .env are the defaults.
+  const company = () => companyFor(store, env);
 
   const routes = [
-    ['GET', /^\/api\/office$/, () => ({ company, providers: providerStatus(env), templates: AGENT_TEMPLATES, agents: store.agents(), stats: store.stats(), waiting: runner.waitingIds?.() ?? [], tasks: store.tasks() })],
+    ['GET', /^\/api\/office$/, () => ({ company: company(), providers: providerStatus(env), templates: AGENT_TEMPLATES, agents: store.agents(), stats: store.stats(), waiting: runner.waitingIds?.() ?? [], tasks: store.tasks() })],
     ['GET', /^\/api\/tasks\.csv$/, () => ({ raw: tasksCsv(store), type: 'text/csv; charset=utf-8', filename: 'agents-office-tasks.csv' })],
+    ['PUT', /^\/api\/company$/, (_, body) => (store.setCompany(body), company())],
     ['GET', /^\/api\/export$/, () => ({ app: 'agents-office-os', version: 1, agents: store.agents() })],
     ['POST', /^\/api\/import$/, (_, body) => ({ agents: store.importAgents(body.agents) })],
     ['POST', /^\/api\/agents$/, (_, body) => [201, store.addAgent(body)]],
@@ -148,7 +150,7 @@ export function createApp({ store, runner, env = process.env }) {
         for (const [method, pattern, fn] of routes) {
           const m = url.pathname.match(pattern);
           if (!m || req.method !== method) continue;
-          const body = ['POST', 'PATCH'].includes(method) ? await readJson(req) : {};
+          const body = ['POST', 'PATCH', 'PUT'].includes(method) ? await readJson(req) : {};
           let result = await fn(m.slice(1), body);
           let status = 200;
           if (Array.isArray(result)) [status, result] = result;
@@ -165,6 +167,15 @@ export function createApp({ store, runner, env = process.env }) {
     } catch (err) {
       return send(res, 400, { error: err.message });
     }
+  };
+}
+
+export function companyFor(store, env = process.env) {
+  const saved = store.company();
+  return {
+    name: saved.name ?? env.COMPANY_NAME ?? '',
+    about: saved.about ?? env.COMPANY_ABOUT ?? '',
+    brief: saved.brief ?? '',
   };
 }
 
@@ -232,7 +243,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     backups: Number(process.env.OFFICE_BACKUPS ?? 7),
   });
   const runner = createRunner(store, {
-    company: { name: process.env.COMPANY_NAME, about: process.env.COMPANY_ABOUT },
+    company: () => companyFor(store),
     notify: createNotifier(),
     maxConcurrent: Number(process.env.MAX_CONCURRENT_TASKS ?? 3),
   });
