@@ -61,6 +61,8 @@ export function createRunner(store, { complete: call = complete, company = {}, n
       } finally {
         release();
         running.delete(taskId);
+        const done = store.task(taskId);
+        if (done) store.log(done.status === 'done' ? `${agent.name} finished "${done.title}"` : `${agent.name} couldn't finish "${done.title}": ${done.error}`);
         store.scheduleNext(taskId);
         notify(store.task(taskId), agent).catch(() => {});
       }
