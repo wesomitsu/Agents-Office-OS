@@ -3,7 +3,7 @@ import { dirname, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { DEFAULT_AGENTS } from './defaults.js';
 
-const AGENT_FIELDS = ['name', 'role', 'emoji', 'provider', 'model', 'instructions', 'priceIn', 'priceOut', 'offDuty'];
+const AGENT_FIELDS = ['name', 'role', 'emoji', 'provider', 'model', 'instructions', 'priceIn', 'priceOut', 'offDuty', 'maxTokens'];
 const STATUSES = new Set(['todo', 'working', 'done', 'failed']);
 const PRIORITIES = new Set(['high', 'normal', 'low']);
 const REPEATS = new Set(['', 'daily', 'weekly']);
@@ -59,6 +59,10 @@ export function createStore(path, { backups = 7, today = () => new Date().toISOS
     // Prices are optional: US dollars per 1 million tokens, used only for cost estimates.
     // offDuty is stored as 'true' or '' so the agent file stays all strings.
     if ('offDuty' in out) out.offDuty = out.offDuty === 'true' ? 'true' : '';
+    // maxTokens caps how long an answer can be (empty = the provider's default).
+    if (out.maxTokens && !(/^\d+$/.test(out.maxTokens) && Number(out.maxTokens) >= 1 && Number(out.maxTokens) <= 128000)) {
+      throw new Error('maxTokens must be a whole number from 1 to 128000');
+    }
     for (const k of ['priceIn', 'priceOut']) {
       if (out[k] && !(/^\d+(\.\d+)?$/.test(out[k]) && Number(out[k]) <= 10000)) throw new Error(`${k} must be a number of dollars per 1M tokens`);
     }

@@ -84,7 +84,8 @@ The header shows which providers are ready (●) and which still need a key (○
 | 💬 Sage | Customer support replies |
 
 Click a desk to rename an agent, change its emoji, job, provider, model or
-instructions. Add the model's input and output prices ($ per 1M tokens, from your
+instructions. Set **Max answer length** to cap how many tokens one answer can use (a simple
+way to keep costs predictable). Add the model's input and output prices ($ per 1M tokens, from your
 provider's pricing page) and the desk shows an estimate of what that agent has
 spent, based on the tokens its tasks used. Use ◀ ▶ in a desk's dialog to rearrange the office, and **Copy** to hire another
 agent with the same setup (for example a second support agent on a cheaper model).
