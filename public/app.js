@@ -130,7 +130,7 @@ const fmtTokens = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n));
 function card(t) {
   const a = office.agents.find((x) => x.id === t.agentId);
   const buttons = {
-    todo: `<button class="btn small" data-run="${t.id}">▶ Start</button><button class="btn small" data-edit="${t.id}" title="Edit">✎</button>`,
+    todo: `<button class="btn small" data-run="${t.id}">▶ Start</button><button class="btn small" data-preview="${t.id}" title="See exactly what the agent will receive">👁</button><button class="btn small" data-edit="${t.id}" title="Edit">✎</button>`,
     working: `<span class="who">${office.waiting?.includes(t.id) ? 'Waiting for a free slot…' : 'Working on it…'}</span>`,
     done: `<button class="btn small" data-view="${t.id}">View result</button><button class="btn small" data-run="${t.id}">↻ Redo</button>`,
     failed: `<button class="btn small" data-run="${t.id}">↻ Retry</button>`,
@@ -172,11 +172,18 @@ document.addEventListener('click', async (e) => {
     search = $('#search').value.toLowerCase();
     return render();
   }
-  const t = e.target.closest('[data-run],[data-view],[data-delete],[data-dup],[data-edit],[data-agent],#add-agent,#new-task');
+  const t = e.target.closest('[data-run],[data-view],[data-delete],[data-dup],[data-edit],[data-preview],[data-agent],#add-agent,#new-task');
   if (!t) return;
   try {
     if (t.id === 'new-task') return openTaskForm(null);
     if (t.id === 'add-agent') return openAgent(null);
+    if (t.dataset.preview) {
+      const p = await api('GET', `/api/tasks/${t.dataset.preview}/prompt`);
+      $('#prompt-meta').textContent = `Provider: ${p.provider}${p.model ? ` · model: ${p.model}` : ' · default model'}`;
+      $('#prompt-system').textContent = p.system;
+      $('#prompt-task').textContent = p.prompt;
+      return $('#prompt-dialog').showModal();
+    }
     if (t.dataset.edit) return openTaskForm(office.tasks.find((x) => x.id === t.dataset.edit));
     if (t.dataset.dup) {
       // Opens the new-task form pre-filled from this task, so it can be tweaked first.
