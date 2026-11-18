@@ -15,6 +15,7 @@ them work, and read what they hand back.
 - **Undo**: deleted a task by mistake? Click Undo in the bar that appears
 - **Duplicate**: copy any task into the new-task form to tweak and reuse it
 - **Tags**: label tasks (`launch`, `q4`...) and click a tag to see every task with it
+- **Prompt preview**: 👁 on a waiting task shows exactly what the agent will be sent
 - **Per-task model**: use a stronger (or cheaper) model for one task without changing the agent
 - **Ask everyone**: pick "📢 Everyone on duty" to give the same task to every agent and compare their answers
 - **Repeating tasks**: set a task to repeat daily or weekly and the next one is queued when it's done
@@ -148,6 +149,7 @@ work for.
 | `POST` | `/api/tasks/:id/handoff` | Pass a finished result to another agent `{ agentId, note, run }` |
 | `POST` | `/api/tasks/:id/reply` | Send a follow-up `{ message }` on a finished task |
 | `PATCH`/`DELETE` | `/api/tasks/:id` | Edit or delete a task |
+| `GET` | `/api/tasks/:id/prompt` | The exact instructions and task text the agent will receive (no model call) |
 | `POST` | `/api/tasks/:id/restore` | Undo a delete (the last 20 deleted tasks are kept) |
 | `POST` | `/api/tasks/broadcast` | One task per agent `{ title, ..., agentIds?, run? }` (default: everyone on duty) |
 | `POST` | `/api/tasks/start-all` | Start every waiting task `{ agentId? }` (off-duty agents are skipped) |

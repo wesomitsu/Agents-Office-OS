@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { AGENT_TEMPLATES } from './defaults.js';
 import { createNotifier } from './notify.js';
 import { providerStatus } from './providers.js';
-import { createRunner } from './runner.js';
+import { buildPrompt, createRunner } from './runner.js';
 import { createStore } from './store.js';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
@@ -81,6 +81,17 @@ export function createApp({ store, runner, env = process.env }) {
       },
     ],
     ['POST', /^\/api\/tasks\/clear-done$/, (_, body) => ({ removed: store.clearDone(body.agentId || undefined) })],
+    [
+      'GET',
+      /^\/api\/tasks\/([\w-]+)\/prompt$/,
+      ([id]) => {
+        // What the agent would receive for this task, without calling any model.
+        const task = store.task(id);
+        const agent = task && store.agent(task.agentId);
+        if (!agent) return null;
+        return { provider: agent.provider, model: task.model || agent.model || '', ...buildPrompt(agent, task, company()) };
+      },
+    ],
     ['POST', /^\/api\/tasks\/([\w-]+)\/restore$/, ([id]) => store.restoreTask(id)],
     ['DELETE', /^\/api\/tasks\/([\w-]+)$/, ([id]) => (store.removeTask(id) ? { ok: true } : null)],
     [
