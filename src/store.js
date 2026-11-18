@@ -151,6 +151,13 @@ export function createStore(path, { backups = 7, today = () => new Date().toISOS
       return next;
     },
 
+    // The newest 100 events, newest first: tasks created, finished, failed, deleted.
+    activity: () => state.activity ?? [],
+    log(text) {
+      state.activity = [{ at: new Date().toISOString(), text: String(text) }, ...(state.activity ?? [])].slice(0, 100);
+      save();
+    },
+
     tasks: () => state.tasks,
     task: (id) => state.tasks.find((t) => t.id === id),
 
@@ -177,7 +184,7 @@ export function createStore(path, { backups = 7, today = () => new Date().toISOS
         updatedAt: new Date().toISOString(),
       };
       state.tasks.unshift(t);
-      save();
+      this.log(`New task for ${agent(agentId).name}: "${t.title}"`);
       return t;
     },
 
@@ -280,7 +287,7 @@ export function createStore(path, { backups = 7, today = () => new Date().toISOS
       if (!t) return false;
       state.tasks = state.tasks.filter((x) => x.id !== id);
       state.trash = [t, ...(state.trash ?? [])].slice(0, 20);
-      save();
+      this.log(`Deleted "${t.title}"`);
       return true;
     },
 

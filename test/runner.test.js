@@ -197,3 +197,17 @@ test('results can be rated and ratings add up per agent', async () => {
   assert.equal(s.stats().social.down, 0);
   assert.throws(() => s.updateTask(a.id, { rating: 'meh' }), /bad rating/);
 });
+
+test('keeps a short activity feed', async () => {
+  const s = store();
+  const runner = createRunner(s, { complete: async ({ prompt }) => { if (prompt === 'bad') throw new Error('rate limited'); return { text: 'ok', usage: { input: 0, output: 0 } }; } });
+  const t = s.addTask({ title: 'Launch post', agentId: 'social' });
+  await runner.run(t.id);
+  await runner.run(s.addTask({ title: 'bad', agentId: 'bugs' }).id);
+  s.removeTask(t.id);
+  const texts = s.activity().map((e) => e.text);
+  assert.deepEqual(texts.slice(0, 4), ['Deleted "Launch post"', 'Bolt couldn\'t finish "bad": rate limited', 'New task for Bolt: "bad"', 'Sky finished "Launch post"']);
+  assert.ok(s.activity().every((e) => !Number.isNaN(Date.parse(e.at))));
+  for (let i = 0; i < 120; i++) s.addTask({ title: `t${i}`, agentId: 'support' });
+  assert.equal(s.activity().length, 100);
+});
