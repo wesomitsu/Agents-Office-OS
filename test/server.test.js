@@ -255,3 +255,18 @@ test('the company profile can be edited and reaches the agents', async () => {
     assert.equal((await api('PUT', '/api/company', { brief: 'x'.repeat(4001) })).status, 400);
   });
 });
+
+test('shows the exact prompt an agent will receive, without calling a model', async () => {
+  await withServer(async (api) => {
+    await api('PUT', '/api/company', { name: 'Acme', brief: 'Be brief.' });
+    const t = (await api('POST', '/api/tasks', { title: 'Refund reply', details: 'Order #12', agentId: 'support' })).data;
+    const r = await api('GET', `/api/tasks/${t.id}/prompt`);
+    assert.equal(r.status, 200);
+    assert.match(r.data.system, /^You are Sage, the Support agent at Acme\./);
+    assert.match(r.data.system, /About the company:\nBe brief\.$/);
+    assert.equal(r.data.prompt, 'Refund reply\n\nOrder #12');
+    assert.equal(r.data.provider, 'demo');
+    assert.equal((await api('GET', '/api/tasks/nope/prompt')).status, 404);
+    assert.equal((await api('GET', '/api/office')).data.tasks[0].status, 'todo');
+  });
+});
