@@ -54,8 +54,8 @@ test('records timings and per-agent stats', async () => {
   const stats = s.stats();
   assert.equal(stats.social.done, 2);
   assert.equal(typeof stats.social.avgSeconds, 'number');
-  assert.deepEqual(stats.bugs, { done: 0, failed: 1, avgSeconds: null, tokensIn: 0, tokensOut: 0, cost: null });
-  assert.deepEqual(stats.support, { done: 0, failed: 0, avgSeconds: null, tokensIn: 0, tokensOut: 0, cost: null });
+  assert.deepEqual(stats.bugs, { done: 0, failed: 1, avgSeconds: null, tokensIn: 0, tokensOut: 0, cost: null, up: 0, down: 0 });
+  assert.deepEqual(stats.support, { done: 0, failed: 0, avgSeconds: null, tokensIn: 0, tokensOut: 0, cost: null, up: 0, down: 0 });
   assert.equal(stats.social.tokensIn, 2);
 });
 
@@ -180,4 +180,20 @@ test('a task can use a different model than its agent', async () => {
   await runner.run(s.addTask({ title: 'easy bug', agentId: 'bugs' }).id);
   assert.deepEqual(seen, ['strong-model', 'everyday-model']);
   assert.throws(() => s.addTask({ title: 'x', agentId: 'bugs', model: 'x'.repeat(101) }), /model name is too long/);
+});
+
+test('results can be rated and ratings add up per agent', async () => {
+  const s = store();
+  const runner = createRunner(s, { complete: async () => ({ text: 'ok', usage: { input: 0, output: 0 } }) });
+  const a = s.addTask({ title: 'a', agentId: 'social' });
+  const b = s.addTask({ title: 'b', agentId: 'social' });
+  await runner.run(a.id);
+  await runner.run(b.id);
+  s.updateTask(a.id, { rating: 'up' });
+  s.updateTask(b.id, { rating: 'down' });
+  assert.equal(s.stats().social.up, 1);
+  assert.equal(s.stats().social.down, 1);
+  s.updateTask(b.id, { rating: '' });
+  assert.equal(s.stats().social.down, 0);
+  assert.throws(() => s.updateTask(a.id, { rating: 'meh' }), /bad rating/);
 });

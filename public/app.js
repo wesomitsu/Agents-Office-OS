@@ -56,7 +56,8 @@ function render() {
         const open = tasks.filter((t) => t.agentId === a.id && (t.status === 'todo' || t.status === 'working')).length;
         const st = office.stats?.[a.id];
         const spent = st?.cost !== null && st?.cost !== undefined ? ` · ~$${st.cost > 0 && st.cost < 0.01 ? '<0.01' : st.cost.toFixed(2)}` : '';
-        const record = st?.done ? `${st.done} done${st.avgSeconds !== null ? ` · ~${st.avgSeconds < 60 ? `${Math.round(st.avgSeconds)}s` : `${Math.round(st.avgSeconds / 60)}m`}` : ''}${spent}` : 'No tasks yet';
+        const rated = st?.up || st?.down ? ` · 👍${st.up} 👎${st.down}` : '';
+        const record = st?.done ? `${st.done} done${st.avgSeconds !== null ? ` · ~${st.avgSeconds < 60 ? `${Math.round(st.avgSeconds)}s` : `${Math.round(st.avgSeconds / 60)}m`}` : ''}${spent}${rated}` : 'No tasks yet';
         const provider = providers.find((p) => p.id === a.provider);
         return `<article class="desk ${busy.has(a.id) ? 'working' : a.offDuty === 'true' ? 'off' : 'idle'}" data-agent="${esc(a.id)}" style="animation-delay:${i * 60}ms" tabindex="0" aria-label="${esc(a.name)}, ${esc(a.role)}">
           <span class="status" title="${busy.has(a.id) ? 'Working' : 'Available'}"></span>
@@ -192,6 +193,7 @@ document.addEventListener('click', async (e) => {
         .map((m) => (m.role === 'user' ? `<div class="you">You: ${esc(m.content)}</div>` : renderMarkdown(m.content)))
         .join('<hr>');
       $('#output-body').dataset.id = task.id;
+      showRating(task.rating);
       $('#reply-text').value = '';
       $('#handoff-note').value = '';
       $('#handoff-agent').innerHTML = office.agents
@@ -397,6 +399,26 @@ $('#company-dialog').addEventListener('close', async () => {
     alert(err.message);
   }
 });
+
+// 👍 / 👎 on a result: click again to clear. Totals show on each desk.
+function showRating(rating) {
+  $('#rate-up').setAttribute('aria-pressed', String(rating === 'up'));
+  $('#rate-down').setAttribute('aria-pressed', String(rating === 'down'));
+}
+for (const [btn, value] of [['#rate-up', 'up'], ['#rate-down', 'down']]) {
+  $(btn).addEventListener('click', async () => {
+    const id = $('#output-body').dataset.id;
+    const current = office.tasks.find((t) => t.id === id)?.rating ?? '';
+    const rating = current === value ? '' : value;
+    try {
+      await api('PATCH', `/api/tasks/${id}`, { rating });
+      showRating(rating);
+      await refresh();
+    } catch (err) {
+      alert(err.message);
+    }
+  });
+}
 
 $('#clear-done').addEventListener('click', async () => {
   const who = filter ? office.agents.find((a) => a.id === filter)?.name : null;
