@@ -146,6 +146,13 @@ label.small-select { flex: 0 0 130px; }
 .toast[hidden] { display: none; }
 .toast span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+/* Activity feed */
+.activity { margin: 0 24px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 10px 14px; }
+.activity summary { cursor: pointer; font-weight: 600; }
+.activity ol { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; font-size: 13px; max-height: 260px; overflow: auto; }
+.activity time { color: var(--muted); margin-right: 6px; font-variant-numeric: tabular-nums; }
+@media (max-width: 560px) { .activity { margin: 0 16px 16px; } }
+
 /* Footer */
 .footer { padding: 0 24px 28px; color: var(--muted); font-size: 13px; display: grid; gap: 6px; justify-items: start; }
 .linkish { background: none; border: 0; padding: 0; color: var(--muted); font: inherit; text-decoration: underline; cursor: pointer; }

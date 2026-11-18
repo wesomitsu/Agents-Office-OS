@@ -90,6 +90,10 @@ function render() {
   if (!agents.some((a) => a.id === filter)) filter = '';
   f.value = filter;
 
+  $('#activity').innerHTML = (office.activity ?? [])
+    .map((e) => `<li><time datetime="${esc(e.at)}">${esc(new Date(e.at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }))}</time> ${esc(e.text)}</li>`)
+    .join('') || '<li class="empty">Nothing yet</li>';
+
   // Don't touch the form lists while someone is filling a form in.
   if (document.querySelector('dialog[open]')) return;
   $('#task-agent').innerHTML = agents.map((a) => `<option value="${esc(a.id)}">${esc(a.emoji)} ${esc(a.name)} · ${esc(a.role)}</option>`).join('') + '<option value="__all__">📢 Everyone on duty (one task each)</option>';
