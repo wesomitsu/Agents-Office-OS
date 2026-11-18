@@ -23,7 +23,7 @@ export function createApp({ store, runner, env = process.env }) {
   const company = () => companyFor(store, env);
 
   const routes = [
-    ['GET', /^\/api\/office$/, () => ({ company: company(), providers: providerStatus(env), templates: AGENT_TEMPLATES, agents: store.agents(), stats: store.stats(), waiting: runner.waitingIds?.() ?? [], tasks: store.tasks() })],
+    ['GET', /^\/api\/office$/, () => ({ company: company(), providers: providerStatus(env), templates: AGENT_TEMPLATES, agents: store.agents(), stats: store.stats(), waiting: runner.waitingIds?.() ?? [], activity: store.activity().slice(0, 30), tasks: store.tasks() })],
     ['GET', /^\/api\/tasks\.csv$/, () => ({ raw: tasksCsv(store), type: 'text/csv; charset=utf-8', filename: 'agents-office-tasks.csv' })],
     ['PUT', /^\/api\/company$/, (_, body) => (store.setCompany(body), company())],
     ['GET', /^\/api\/export$/, () => ({ app: 'agents-office-os', version: 1, agents: store.agents() })],
