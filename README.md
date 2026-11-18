@@ -14,6 +14,7 @@ them work, and read what they hand back.
 - **Edit**: change a waiting task's title, details, agent, priority, due date or repeat before it runs
 - **Undo**: deleted a task by mistake? Click Undo in the bar that appears
 - **Duplicate**: copy any task into the new-task form to tweak and reuse it
+- **Tags**: label tasks (`launch`, `q4`...) and click a tag to see every task with it
 - **Per-task model**: use a stronger (or cheaper) model for one task without changing the agent
 - **Ask everyone**: pick "📢 Everyone on duty" to give the same task to every agent and compare their answers
 - **Repeating tasks**: set a task to repeat daily or weekly and the next one is queued when it's done
