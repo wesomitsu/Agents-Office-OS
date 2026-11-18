@@ -15,6 +15,17 @@ function checkDue(due) {
   return d;
 }
 
+// Tags: "launch, Q4" -> ['launch', 'q4']. Short words, letters/digits/-/_ only, at most 10.
+function checkTags(tags) {
+  const list = (Array.isArray(tags) ? tags : String(tags ?? '').split(','))
+    .map((t) => String(t).trim().toLowerCase().replace(/^#/, ''))
+    .filter(Boolean);
+  for (const t of list) if (!/^[a-z0-9][a-z0-9_-]{0,29}$/.test(t)) throw new Error(`bad tag "${t}": tags are single words of letters, digits, - or _`);
+  const unique = [...new Set(list)];
+  if (unique.length > 10) throw new Error('at most 10 tags per task');
+  return unique;
+}
+
 // Optional per-task model, used instead of the agent's for that one task.
 function checkModel(model) {
   const m = String(model ?? '').trim();
@@ -161,8 +172,9 @@ export function createStore(path, { backups = 7, today = () => new Date().toISOS
     tasks: () => state.tasks,
     task: (id) => state.tasks.find((t) => t.id === id),
 
-    addTask({ title, details = '', agentId, priority = 'normal', due = '', repeat = '', model = '' }) {
+    addTask({ title, details = '', agentId, priority = 'normal', due = '', repeat = '', model = '', tags = [] }) {
       due = checkDue(due);
+      tags = checkTags(tags);
       model = checkModel(model);
       if (!REPEATS.has(repeat)) throw new Error(`bad repeat "${repeat}" (use daily or weekly)`);
       if (!PRIORITIES.has(priority)) throw new Error(`bad priority "${priority}"`);
@@ -177,6 +189,7 @@ export function createStore(path, { backups = 7, today = () => new Date().toISOS
         due,
         repeat,
         model,
+        tags,
         status: 'todo',
         output: '',
         error: '',
@@ -223,6 +236,7 @@ export function createStore(path, { backups = 7, today = () => new Date().toISOS
       if (changes.status && !STATUSES.has(changes.status)) throw new Error(`bad status "${changes.status}"`);
       if ('due' in changes) changes = { ...changes, due: checkDue(changes.due) };
       if ('model' in changes) changes = { ...changes, model: checkModel(changes.model) };
+      if ('tags' in changes) t.tags = checkTags(changes.tags);
       if ('rating' in changes && !['up', 'down', ''].includes(changes.rating)) throw new Error(`bad rating "${changes.rating}" (use up, down or empty)`);
       if ('repeat' in changes && !REPEATS.has(changes.repeat)) throw new Error(`bad repeat "${changes.repeat}" (use daily or weekly)`);
       if ('agentId' in changes && !agent(changes.agentId)) throw new Error(`unknown agent "${changes.agentId}"`);
@@ -278,7 +292,7 @@ export function createStore(path, { backups = 7, today = () => new Date().toISOS
       const base = t.due ? new Date(`${t.due}T00:00:00Z`) : new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00Z');
       base.setUTCDate(base.getUTCDate() + days);
       t.nextCreated = true;
-      return this.addTask({ title: t.title, details: t.details, agentId: t.agentId, priority: t.priority, repeat: t.repeat, model: t.model, due: base.toISOString().slice(0, 10) });
+      return this.addTask({ title: t.title, details: t.details, agentId: t.agentId, priority: t.priority, repeat: t.repeat, model: t.model, tags: t.tags, due: base.toISOString().slice(0, 10) });
     },
 
     // Deleted tasks go to a small trash (the 20 most recent) so they can be undone.

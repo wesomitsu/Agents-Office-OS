@@ -18,12 +18,13 @@ function openTaskForm(task) {
   $('#task-dialog').showModal();
   if (task) {
     for (const k of ['title', 'details', 'agentId', 'priority', 'due', 'repeat', 'model']) f.elements[k].value = task[k] ?? '';
+    f.elements.tags.value = (task.tags ?? []).join(', ');
   }
 }
 let lastJson = '';
 let filter = '';
 let search = '';
-const matches = (t) => !search || `${t.title}\n${t.details}\n${t.output}`.toLowerCase().includes(search);
+const matches = (t) => !search || `${t.title}\n${t.details}\n${t.output}\n${(t.tags ?? []).map((x) => `#${x}`).join(' ')}`.toLowerCase().includes(search);
 
 async function api(method, path, body) {
   const res = await fetch(path, { method, headers: { 'Content-Type': 'application/json' }, body: body && JSON.stringify(body) });
@@ -137,6 +138,7 @@ function card(t) {
   return `<div class="card">
     <div class="who">${esc(a?.emoji ?? '❔')} ${esc(a?.name ?? 'Removed agent')}${t.priority === 'high' ? ' <span class="prio high">High</span>' : t.priority === 'low' ? ' <span class="prio low">Low</span>' : ''}</div>
     <div class="title">${esc(t.title)}</div>
+    ${t.tags?.length ? `<div class="tags">${t.tags.map((x) => `<button class="tag-chip" data-tag="${esc(x)}">#${esc(x)}</button>`).join('')}</div>` : ''}
     ${dueLabel(t)}${t.model ? `<div class="due">Model: ${esc(t.model)}</div>` : ''}${t.repeat ? `<div class="due">↻ Repeats ${esc(t.repeat)}</div>` : ''}
     ${t.usage && t.usage.input + t.usage.output ? `<div class="tokens">${fmtTokens(t.usage.input + t.usage.output)} tokens</div>` : ''}
     ${t.error ? `<div class="err">${esc(t.error)}</div>` : ''}
@@ -163,6 +165,13 @@ function openAgent(agent) {
 }
 
 document.addEventListener('click', async (e) => {
+  const chip = e.target.closest('[data-tag]');
+  if (chip) {
+    // Clicking a tag searches for it.
+    $('#search').value = `#${chip.dataset.tag}`;
+    search = $('#search').value.toLowerCase();
+    return render();
+  }
   const t = e.target.closest('[data-run],[data-view],[data-delete],[data-dup],[data-edit],[data-agent],#add-agent,#new-task');
   if (!t) return;
   try {
@@ -259,7 +268,7 @@ $('#task-dialog').addEventListener('close', async () => {
   if (d.returnValue !== 'ok') editingTask = null;
   if (d.returnValue === 'ok') {
     try {
-      const fields = { title: f.elements.title.value, details: f.elements.details.value, agentId: f.elements.agentId.value, priority: f.elements.priority.value, due: f.elements.due.value, repeat: f.elements.repeat.value, model: f.elements.model.value };
+      const fields = { title: f.elements.title.value, details: f.elements.details.value, agentId: f.elements.agentId.value, priority: f.elements.priority.value, due: f.elements.due.value, repeat: f.elements.repeat.value, model: f.elements.model.value, tags: f.elements.tags.value };
       if (editingTask) {
         await api('PATCH', `/api/tasks/${editingTask}`, fields);
         editingTask = null;
@@ -274,7 +283,7 @@ $('#task-dialog').addEventListener('close', async () => {
         await refresh();
         return;
       }
-      const task = await api('POST', '/api/tasks', { title: f.elements.title.value, details: f.elements.details.value, agentId: f.elements.agentId.value, priority: f.elements.priority.value, due: f.elements.due.value, repeat: f.elements.repeat.value, model: f.elements.model.value });
+      const task = await api('POST', '/api/tasks', { title: f.elements.title.value, details: f.elements.details.value, agentId: f.elements.agentId.value, priority: f.elements.priority.value, due: f.elements.due.value, repeat: f.elements.repeat.value, model: f.elements.model.value, tags: f.elements.tags.value });
       if (f.elements.run.checked) await api('POST', `/api/tasks/${task.id}/run`);
       f.reset();
       await refresh();
