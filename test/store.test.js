@@ -127,3 +127,12 @@ test('an agent can cap its answer length', () => {
   assert.throws(() => store.updateAgent('support', { maxTokens: '0' }), /maxTokens/);
   assert.throws(() => store.updateAgent('support', { maxTokens: '200000' }), /maxTokens/);
 });
+
+test('tasks can carry tags', () => {
+  const store = createStore(tmpFile());
+  const t = store.addTask({ title: 'a', agentId: 'support', tags: ' Launch, urgent ,launch ' });
+  assert.deepEqual(t.tags, ['launch', 'urgent']);
+  assert.deepEqual(store.updateTask(t.id, { tags: 'q4' }).tags, ['q4']);
+  assert.deepEqual(store.updateTask(t.id, { tags: '' }).tags, []);
+  assert.throws(() => store.addTask({ title: 'b', agentId: 'support', tags: 'no spaces allowed here!' }), /tags/);
+});
