@@ -100,3 +100,18 @@ test('openai-compatible: retries busy responses, then gives up', async () => {
   await assert.rejects(complete({ provider: 'openai', ...ask }, { env, fetch: badKey }), /returned 401/);
   assert.equal(bad, 1); // client errors are not retried
 });
+
+test('passes an output cap to both providers', async () => {
+  let sent;
+  const anthropic = { beta: { messages: { create: async (b) => ((sent = b), { stop_reason: 'end_turn', content: [] }) } } };
+  await complete({ provider: 'anthropic', ...ask, maxTokens: 800 }, { env: { ANTHROPIC_API_KEY: 'k' }, anthropic });
+  assert.equal(sent.max_tokens, 800);
+  await complete({ provider: 'anthropic', ...ask }, { env: { ANTHROPIC_API_KEY: 'k' }, anthropic });
+  assert.equal(sent.max_tokens, 16000);
+  let body;
+  const fetch = async (_, i) => ((body = JSON.parse(i.body)), { ok: true, json: async () => ({ choices: [] }) });
+  await complete({ provider: 'openai', ...ask, maxTokens: 500 }, { env: { OPENAI_API_KEY: 'x' }, fetch });
+  assert.equal(body.max_tokens, 500);
+  await complete({ provider: 'openai', ...ask }, { env: { OPENAI_API_KEY: 'x' }, fetch });
+  assert.equal('max_tokens' in body, false);
+});

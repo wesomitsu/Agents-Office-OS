@@ -118,3 +118,12 @@ test('the trash keeps only the 20 most recent deletions', () => {
   assert.equal(store.restoreTask(ids[0]), null);
   assert.equal(store.restoreTask(ids[24]).title, 't24');
 });
+
+test('an agent can cap its answer length', () => {
+  const store = createStore(tmpFile());
+  assert.equal(store.updateAgent('support', { maxTokens: '1200' }).maxTokens, '1200');
+  assert.equal(store.updateAgent('support', { maxTokens: '' }).maxTokens, '');
+  assert.throws(() => store.updateAgent('support', { maxTokens: 'lots' }), /maxTokens/);
+  assert.throws(() => store.updateAgent('support', { maxTokens: '0' }), /maxTokens/);
+  assert.throws(() => store.updateAgent('support', { maxTokens: '200000' }), /maxTokens/);
+});
