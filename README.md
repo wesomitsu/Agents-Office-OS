@@ -17,6 +17,7 @@ them work, and read what they hand back.
 - **Per-task model**: use a stronger (or cheaper) model for one task without changing the agent
 - **Ask everyone**: pick "📢 Everyone on duty" to give the same task to every agent and compare their answers
 - **Repeating tasks**: set a task to repeat daily or weekly and the next one is queued when it's done
+- **Ratings**: 👍 or 👎 a result; each desk shows the totals, so you can see which agent (or model) works best
 - **Follow-ups**: reply to a finished task ("make it shorter") and the agent revises it, keeping the conversation
 - **Hand-offs**: pass a result to another agent, e.g. Marketing's campaign to Social Media for posts
 - **Your keys stay yours**: keys are read from your local `.env` file only, never saved in the office data or sent to the browser
