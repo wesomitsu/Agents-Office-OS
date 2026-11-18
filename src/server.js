@@ -63,10 +63,12 @@ export function createApp({ store, runner, env = process.env }) {
     ],
     [
       'POST',
-      /^\/api\/tasks\/start-all$/,
-      (_, body) => {
-        // Starts every waiting task (optionally one agent's), skipping off-duty agents.
-        const waiting = store.tasks().filter((t) => t.status === 'todo' && (!body.agentId || t.agentId === body.agentId));
+      /^\/api\/tasks\/(start-all|retry-failed)$/,
+      ([which], body) => {
+        // Starts every waiting task, or retries every failed one (optionally one
+        // agent's), skipping off-duty agents.
+        const status = which === 'start-all' ? 'todo' : 'failed';
+        const waiting = store.tasks().filter((t) => t.status === status && (!body.agentId || t.agentId === body.agentId));
         let started = 0;
         let skipped = 0;
         for (const t of waiting) {

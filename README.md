@@ -152,6 +152,7 @@ work for.
 | `GET` | `/api/tasks/:id/prompt` | The exact instructions and task text the agent will receive (no model call) |
 | `POST` | `/api/tasks/:id/restore` | Undo a delete (the last 20 deleted tasks are kept) |
 | `POST` | `/api/tasks/broadcast` | One task per agent `{ title, ..., agentIds?, run? }` (default: everyone on duty) |
+| `POST` | `/api/tasks/retry-failed` | Retry every failed task `{ agentId? }` |
 | `POST` | `/api/tasks/start-all` | Start every waiting task `{ agentId? }` (off-duty agents are skipped) |
 | `POST` | `/api/tasks/clear-done` | Delete finished tasks `{ agentId? }` |
 | `GET` | `/api/tasks.csv` | Download every task as a spreadsheet |
