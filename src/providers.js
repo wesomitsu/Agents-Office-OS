@@ -38,7 +38,8 @@ export function providerStatus(env = process.env) {
 }
 
 // history: earlier turns of the same task, [{ role: 'user' | 'assistant', content }].
-export async function complete({ provider, model, system, prompt, history = [] }, { env = process.env, fetch = globalThis.fetch, anthropic } = {}) {
+// maxTokens: optional cap on the answer length.
+export async function complete({ provider, model, system, prompt, history = [], maxTokens }, { env = process.env, fetch = globalThis.fetch, anthropic } = {}) {
   const p = PROVIDERS[provider];
   if (!p) throw new Error(`Unknown provider "${provider}"`);
   if (!p.configured(env)) throw new Error(`${p.label} isn't set up: add ${p.keyEnv} to your .env file`);
@@ -54,7 +55,7 @@ export async function complete({ provider, model, system, prompt, history = [] }
     const client = anthropic ?? new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
     const res = await client.beta.messages.create({
       model: useModel,
-      max_tokens: 16000,
+      max_tokens: Number(maxTokens) || 16000,
       system,
       messages: [...history, { role: 'user', content: prompt }],
       // If a safety check declines the request, let the API retry it on its
@@ -79,6 +80,7 @@ export async function complete({ provider, model, system, prompt, history = [] }
     },
     body: JSON.stringify({
       model: useModel,
+      ...(Number(maxTokens) ? { max_tokens: Number(maxTokens) } : {}),
       messages: [
         { role: 'system', content: system },
         ...history,
