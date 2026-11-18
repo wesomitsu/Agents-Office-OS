@@ -270,3 +270,17 @@ test('shows the exact prompt an agent will receive, without calling a model', as
     assert.equal((await api('GET', '/api/office')).data.tasks[0].status, 'todo');
   });
 });
+
+test('retries every failed task', async () => {
+  await withServer(async (api) => {
+    const ids = [];
+    for (const title of ['a', 'b']) ids.push((await api('POST', '/api/tasks', { title, agentId: 'support' })).data.id);
+    for (const id of ids) await api('PATCH', `/api/tasks/${id}`, { status: 'failed', error: 'timeout' });
+    await api('POST', '/api/tasks', { title: 'c', agentId: 'support' });
+    const r = await api('POST', '/api/tasks/retry-failed', {});
+    assert.deepEqual(r.data, { started: 2, skipped: 0 });
+    await new Promise((res) => setTimeout(res, 30));
+    const statuses = (await api('GET', '/api/office')).data.tasks.map((t) => `${t.title}:${t.status}`).sort();
+    assert.deepEqual(statuses, ['a:done', 'b:done', 'c:todo']);
+  });
+});

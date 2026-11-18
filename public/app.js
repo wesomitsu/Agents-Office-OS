@@ -335,6 +335,16 @@ $('#import-team').addEventListener('change', async (e) => {
   }
 });
 
+$('#retry-failed').addEventListener('click', async () => {
+  try {
+    const r = await api('POST', '/api/tasks/retry-failed', { agentId: filter });
+    if (r.skipped) alert(`Retried ${r.started}. ${r.skipped} skipped because their agent is off duty.`);
+    await refresh();
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
 $('#start-all').addEventListener('click', async () => {
   try {
     const r = await api('POST', '/api/tasks/start-all', { agentId: filter });
