@@ -216,11 +216,12 @@ export function createStore(path, { backups = 7, today = () => new Date().toISOS
       if (changes.status && !STATUSES.has(changes.status)) throw new Error(`bad status "${changes.status}"`);
       if ('due' in changes) changes = { ...changes, due: checkDue(changes.due) };
       if ('model' in changes) changes = { ...changes, model: checkModel(changes.model) };
+      if ('rating' in changes && !['up', 'down', ''].includes(changes.rating)) throw new Error(`bad rating "${changes.rating}" (use up, down or empty)`);
       if ('repeat' in changes && !REPEATS.has(changes.repeat)) throw new Error(`bad repeat "${changes.repeat}" (use daily or weekly)`);
       if ('agentId' in changes && !agent(changes.agentId)) throw new Error(`unknown agent "${changes.agentId}"`);
       if ('title' in changes && !String(changes.title).trim()) throw new Error('title is required');
       if (changes.priority && !PRIORITIES.has(changes.priority)) throw new Error(`bad priority "${changes.priority}"`);
-      for (const k of ['status', 'priority', 'due', 'repeat', 'agentId', 'model', 'output', 'error', 'title', 'details', 'startedAt', 'finishedAt']) if (k in changes) t[k] = String(changes[k]);
+      for (const k of ['status', 'priority', 'due', 'repeat', 'agentId', 'model', 'rating', 'output', 'error', 'title', 'details', 'startedAt', 'finishedAt']) if (k in changes) t[k] = String(changes[k]);
       t.updatedAt = new Date().toISOString();
       save();
       return t;
@@ -229,7 +230,7 @@ export function createStore(path, { backups = 7, today = () => new Date().toISOS
     // Per-agent counts and average run time for finished tasks.
     stats() {
       const out = {};
-      for (const a of state.agents) out[a.id] = { done: 0, failed: 0, avgSeconds: null, tokensIn: 0, tokensOut: 0, cost: null };
+      for (const a of state.agents) out[a.id] = { done: 0, failed: 0, avgSeconds: null, tokensIn: 0, tokensOut: 0, cost: null, up: 0, down: 0 };
       const totals = {};
       for (const t of state.tasks) {
         const s = out[t.agentId];
@@ -237,6 +238,8 @@ export function createStore(path, { backups = 7, today = () => new Date().toISOS
           s.tokensIn += t.usage.input;
           s.tokensOut += t.usage.output;
         }
+        if (s && t.rating === 'up') s.up++;
+        if (s && t.rating === 'down') s.down++;
         if (!s || (t.status !== 'done' && t.status !== 'failed')) continue;
         s[t.status]++;
         if (t.status === 'done' && t.startedAt && t.finishedAt) {
