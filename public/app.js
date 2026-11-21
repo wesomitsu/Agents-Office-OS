@@ -22,8 +22,11 @@ function openTaskForm(task) {
   }
 }
 let lastJson = '';
-let filter = '';
-let search = '';
+// The board's filter and search survive a reload (kept in this browser only).
+const saved = (() => { try { return JSON.parse(localStorage.getItem('board') ?? '{}'); } catch { return {}; } })();
+let filter = String(saved.filter ?? '');
+let search = String(saved.search ?? '');
+$('#search').value = search;
 const matches = (t) => !search || `${t.title}\n${t.details}\n${t.output}\n${(t.tags ?? []).map((x) => `#${x}`).join(' ')}`.toLowerCase().includes(search);
 
 async function api(method, path, body) {
@@ -90,6 +93,7 @@ function render() {
   f.innerHTML = '<option value="">Everyone</option>' + agents.map((a) => `<option value="${esc(a.id)}">${esc(a.emoji)} ${esc(a.name)}</option>`).join('');
   if (!agents.some((a) => a.id === filter)) filter = '';
   f.value = filter;
+  try { localStorage.setItem('board', JSON.stringify({ filter, search })); } catch {}
 
   $('#activity').innerHTML = (office.activity ?? [])
     .map((e) => `<li><time datetime="${esc(e.at)}">${esc(new Date(e.at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }))}</time> ${esc(e.text)}</li>`)
