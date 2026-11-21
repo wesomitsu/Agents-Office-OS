@@ -136,3 +136,13 @@ test('tasks can carry tags', () => {
   assert.deepEqual(store.updateTask(t.id, { tags: '' }).tags, []);
   assert.throws(() => store.addTask({ title: 'b', agentId: 'support', tags: 'no spaces allowed here!' }), /tags/);
 });
+
+test('tasks left working by a restart are marked failed on load', () => {
+  const file = tmpFile();
+  const store = createStore(file);
+  const t = store.addTask({ title: 'Long job', agentId: store.agents()[0].id });
+  store.updateTask(t.id, { status: 'working' });
+  const after = createStore(file).task(t.id);
+  assert.equal(after.status, 'failed');
+  assert.match(after.error, /Interrupted/);
+});
