@@ -14,6 +14,7 @@ them work, and read what they hand back.
 - **Edit**: change a waiting task's title, details, agent, priority, due date or repeat before it runs
 - **Undo**: deleted a task by mistake? Click Undo in the bar that appears
 - **Duplicate**: copy any task into the new-task form to tweak and reuse it
+- **Remembers your view**: the board's search and agent filter stay put when you reload
 - **Tags**: label tasks (`launch`, `q4`...) and click a tag to see every task with it
 - **Prompt preview**: 👁 on a waiting task shows exactly what the agent will be sent
 - **Per-task model**: use a stronger (or cheaper) model for one task without changing the agent
