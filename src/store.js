@@ -43,6 +43,14 @@ export function createStore(path, { backups = 7, today = () => new Date().toISOS
     if (err.code !== 'ENOENT') throw err;
     state = { agents: structuredClone(DEFAULT_AGENTS), tasks: [] };
   }
+  // A task still "working" when the office starts was cut off by a restart or crash;
+  // nothing will ever finish it, so mark it failed (Retry all picks it up).
+  for (const t of state.tasks) {
+    if (t.status !== 'working') continue;
+    t.status = 'failed';
+    t.error = 'Interrupted: the office restarted while this task was running. Retry it.';
+    t.finishedAt = new Date().toISOString();
+  }
 
   // Before the first change of each day, copy the current file to
   // backups/office-YYYY-MM-DD.json and drop copies beyond the newest `backups`.
