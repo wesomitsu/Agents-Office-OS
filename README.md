@@ -12,6 +12,7 @@ them work, and read what they hand back.
 - **Task board**: to do, working, done and needs attention, updated live, with high-priority tasks on top and overdue tasks flagged
 - **Readable results**: formatted output you can copy or download as Markdown, or export every task as CSV
 - **Edit**: change a waiting task's title, details, agent, priority, due date or repeat before it runs
+- **Restart-safe**: tasks cut off by a restart or crash move to Needs attention instead of looking busy forever
 - **Undo**: deleted a task by mistake? Click Undo in the bar that appears
 - **Duplicate**: copy any task into the new-task form to tweak and reuse it
 - **Tags**: label tasks (`launch`, `q4`...) and click a tag to see every task with it
