@@ -54,6 +54,18 @@ docker run -p 3000:3000 --env-file .env -e OFFICE_PASSWORD=change-me -v office-d
 Your agents and tasks are kept in the `office-data` volume. Keys come from your
 `.env` file at run time and are never baked into the image.
 
+**Using Ollama on the same machine?** Inside the container, `localhost` is the
+container itself, so point the office at the host instead:
+
+```sh
+OPENAI_BASE_URL=http://host.docker.internal:11434/v1
+```
+
+That works as is on Docker Desktop (Mac and Windows). On Linux, also add
+`--add-host=host.docker.internal:host-gateway` to `docker run`, and make Ollama
+listen beyond loopback with `OLLAMA_HOST=0.0.0.0`. That setting can expose Ollama
+to your network, so limit port 11434 with a firewall.
+
 ## Add your AI providers
 
 ```sh
