@@ -211,3 +211,33 @@ test('keeps a short activity feed', async () => {
   for (let i = 0; i < 120; i++) s.addTask({ title: `t${i}`, agentId: 'support' });
   assert.equal(s.activity().length, 100);
 });
+
+test('falls back to backup providers in order when the agent provider fails', async () => {
+  const s = store();
+  const a = s.addAgent({ name: 'Ann', role: 'x', provider: 'anthropic', model: 'big' });
+  const t = s.addTask({ agentId: a.id, title: 'Post' });
+  const tried = [];
+  const runner = createRunner(s, {
+    backups: ['anthropic', 'openai', 'demo'],
+    complete: async (req) => {
+      tried.push([req.provider, req.model]);
+      if (req.provider !== 'demo') throw new Error(`${req.provider} down`);
+      return { text: 'saved', usage: { input: 1, output: 1 } };
+    },
+  });
+  const result = await runner.run(t.id);
+  assert.deepEqual(tried, [['anthropic', 'big'], ['openai', ''], ['demo', '']]);
+  assert.equal(result.status, 'done');
+  assert.equal(result.output, 'saved');
+  assert.ok(s.activity().some((e) => e.text === 'Ann used backup provider demo for "Post"'));
+});
+
+test('reports every provider error when all backups fail', async () => {
+  const s = store();
+  const a = s.addAgent({ name: 'Ann', role: 'x', provider: 'anthropic' });
+  const t = s.addTask({ agentId: a.id, title: 'Post' });
+  const runner = createRunner(s, { backups: ['openai'], complete: async (req) => { throw new Error(`${req.provider} down`); } });
+  const result = await runner.run(t.id);
+  assert.equal(result.status, 'failed');
+  assert.equal(result.error, 'anthropic down | backup openai: openai down');
+});

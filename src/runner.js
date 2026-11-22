@@ -10,8 +10,23 @@ export function buildPrompt(agent, task, company = {}) {
   return { system, prompt };
 }
 
-export function createRunner(store, { complete: call = complete, company = {}, notify = async () => {}, maxConcurrent = 3 } = {}) {
+export function createRunner(store, { complete: call = complete, company = {}, notify = async () => {}, maxConcurrent = 3, backups = [] } = {}) {
   const running = new Set();
+  // If the agent's provider fails (down, rate-limited, out of credit), try
+  // each backup provider in order with its default model.
+  async function callWithBackups(req) {
+    const order = [req.provider, ...backups.filter((b) => b !== req.provider)];
+    const errors = [];
+    for (const [i, provider] of order.entries()) {
+      try {
+        const res = await call(i === 0 ? req : { ...req, provider, model: '' });
+        return { ...res, provider };
+      } catch (err) {
+        errors.push(i === 0 ? err.message : `${provider}: ${err.message}`);
+      }
+    }
+    throw new Error(errors.join(' | backup '));
+  }
   // At most `maxConcurrent` model calls at once (0 = no limit), so a burst of
   // tasks doesn't hit provider rate limits. Others wait for a free slot.
   const waiting = [];
@@ -49,7 +64,8 @@ export function createRunner(store, { complete: call = complete, company = {}, n
       await slot(taskId);
       try {
         const { system, prompt } = buildPrompt(agent, task, typeof company === 'function' ? company() : company);
-        const { text, usage } = await call({ provider: agent.provider, model: task.model || agent.model, maxTokens: agent.maxTokens, system, prompt });
+        const { text, usage, provider } = await callWithBackups({ provider: agent.provider, model: task.model || agent.model, maxTokens: agent.maxTokens, system, prompt });
+        if (provider !== agent.provider) store.log(`${agent.name} used backup provider ${provider} for "${task.title}"`);
         store.addUsage(taskId, usage);
         store.setThread(taskId, [
           { role: 'user', content: prompt },
@@ -84,7 +100,7 @@ export function createRunner(store, { complete: call = complete, company = {}, n
       await slot(taskId);
       try {
         const { system } = buildPrompt(agent, task, typeof company === 'function' ? company() : company);
-        const { text, usage } = await call({ provider: agent.provider, model: task.model || agent.model, maxTokens: agent.maxTokens, system, prompt: message, history });
+        const { text, usage } = await callWithBackups({ provider: agent.provider, model: task.model || agent.model, maxTokens: agent.maxTokens, system, prompt: message, history });
         store.addUsage(taskId, usage);
         store.setThread(taskId, [...history, { role: 'user', content: message }, { role: 'assistant', content: text }]);
         return store.updateTask(taskId, { status: 'done', output: text, finishedAt: new Date().toISOString() });
