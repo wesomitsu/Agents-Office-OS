@@ -81,6 +81,12 @@ finishes.
 If an OpenAI-compatible API is busy (429) or briefly down (5xx), the request is
 retried up to 3 times. The Anthropic SDK has its own retries.
 
+Set `BACKUP_PROVIDERS` to an ordered list of your other providers, e.g.
+`BACKUP_PROVIDERS=openai,anthropic`. If an agent's provider fails (down,
+rate-limited, out of credit), the task is retried on each backup in turn with
+that provider's default model, and the activity feed notes which one answered.
+Providers without a key are skipped.
+
 The header shows which providers are ready (●) and which still need a key (○).
 
 ## The team

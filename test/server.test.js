@@ -284,3 +284,9 @@ test('retries every failed task', async () => {
     assert.deepEqual(statuses, ['a:done', 'b:done', 'c:todo']);
   });
 });
+
+test('backupProviders keeps only ready, known providers in order', async () => {
+  const { backupProviders } = await import('../src/server.js');
+  assert.deepEqual(backupProviders({ BACKUP_PROVIDERS: 'openai, anthropic ,nope,demo', ANTHROPIC_API_KEY: 'x' }), ['anthropic', 'demo']);
+  assert.deepEqual(backupProviders({}), []);
+});

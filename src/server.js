@@ -251,6 +251,12 @@ async function serveStatic(pathname, res) {
   }
 }
 
+// BACKUP_PROVIDERS=openai,anthropic: ready providers to fall back to, in order.
+export function backupProviders(env) {
+  const ready = new Set(providerStatus(env).filter((p) => p.configured).map((p) => p.id));
+  return String(env.BACKUP_PROVIDERS ?? '').split(',').map((s) => s.trim()).filter((id) => ready.has(id));
+}
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const store = createStore(process.env.OFFICE_DATA ?? join(root, 'data', 'office.json'), {
     backups: Number(process.env.OFFICE_BACKUPS ?? 7),
@@ -259,6 +265,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     company: () => companyFor(store),
     notify: createNotifier(),
     maxConcurrent: Number(process.env.MAX_CONCURRENT_TASKS ?? 3),
+    backups: backupProviders(process.env),
   });
   const port = Number(process.env.PORT ?? 3000);
   // Bind to localhost only: the office can spend your API credit, so it
