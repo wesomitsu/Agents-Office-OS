@@ -6,6 +6,10 @@ them work, and read what they hand back.
 
 ![Agents at work in the office](docs/office.gif)
 
+| Sales zone | Approvals |
+|---|---|
+| ![Sales agents working a deal](docs/sales-zone.gif) | ![Reviewing and approving agent work](docs/approvals.gif) |
+
 - **Five agents ready to go**, each with its own instructions, and you can hire more
 - **Bring any AI**: Anthropic (Claude), any OpenAI-compatible API (OpenAI, OpenRouter, Groq, Together, a local Ollama), or the built-in demo
 - **One model per agent**: put your support agent on a fast, cheap model and your bug fixer on a strong one
