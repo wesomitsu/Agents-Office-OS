@@ -47,17 +47,45 @@ export function createRunner(store, { complete: call = complete, company = {}, n
       return;
     }
     waitingIds.add(taskId);
-    await new Promise((resolve) => waiting.push(resolve));
+    await new Promise((resolve) => waiting.push({ taskId, resolve }));
     waitingIds.delete(taskId);
   }
   function release() {
     const next = waiting.shift();
-    if (next) next(); // hand the slot straight to the next task
+    if (next) next.resolve(); // hand the slot straight to the next task
     else active--;
+  }
+  // Stop buttons: each running task's stop() rejects its run with "Stopped".
+  const stoppers = new Map();
+  // Waits for a slot and then does the work, unless the task is stopped first.
+  // Resolves to the result; always gives the slot back (or leaves the queue).
+  async function guarded(taskId, work) {
+    let stop;
+    const stopped = new Promise((_, reject) => (stop = () => reject(new Error('Stopped'))));
+    stoppers.set(taskId, stop);
+    try {
+      await Promise.race([slot(taskId), stopped]);
+      return await Promise.race([work(), stopped]);
+    } finally {
+      stoppers.delete(taskId);
+      const i = waiting.findIndex((w) => w.taskId === taskId);
+      if (i < 0) release(); // it held a slot
+      else {
+        waiting.splice(i, 1); // stopped while still in the queue
+        waitingIds.delete(taskId);
+      }
+    }
   }
 
   return {
     isRunning: (taskId) => running.has(taskId),
+    // Stops a running (or waiting) task; it moves to failed with "Stopped".
+    stop(taskId) {
+      const stop = stoppers.get(taskId);
+      if (!stop) return false;
+      stop();
+      return true;
+    },
     waitingIds: () => [...waitingIds],
 
     async run(taskId) {
@@ -70,10 +98,9 @@ export function createRunner(store, { complete: call = complete, company = {}, n
 
       running.add(taskId);
       store.updateTask(taskId, { status: 'working', error: '', startedAt: new Date().toISOString(), finishedAt: '' });
-      await slot(taskId);
       try {
         const { system, prompt } = buildPrompt(agent, task, typeof company === 'function' ? company() : company);
-        const { text, usage, provider } = await callWithBackups({ provider: agent.provider, model: task.model || agent.model, maxTokens: agent.maxTokens, system, prompt });
+        const { text, usage, provider } = await guarded(taskId, () => callWithBackups({ provider: agent.provider, model: task.model || agent.model, maxTokens: agent.maxTokens, system, prompt }));
         if (provider !== agent.provider) store.log(`${agent.name} used backup provider ${provider} for "${task.title}"`);
         store.addUsage(taskId, usage);
         store.setThread(taskId, [
@@ -84,7 +111,6 @@ export function createRunner(store, { complete: call = complete, company = {}, n
       } catch (err) {
         return store.updateTask(taskId, { status: 'failed', error: err.message, finishedAt: new Date().toISOString() });
       } finally {
-        release();
         running.delete(taskId);
         const done = store.task(taskId);
         if (done) store.log(done.status === 'done' ? `${agent.name} finished "${done.title}"` : `${agent.name} couldn't finish "${done.title}": ${done.error}`);
@@ -106,10 +132,9 @@ export function createRunner(store, { complete: call = complete, company = {}, n
       running.add(taskId);
       const history = task.thread;
       store.updateTask(taskId, { status: 'working', error: '', startedAt: new Date().toISOString(), finishedAt: '' });
-      await slot(taskId);
       try {
         const { system } = buildPrompt(agent, task, typeof company === 'function' ? company() : company);
-        const { text, usage } = await callWithBackups({ provider: agent.provider, model: task.model || agent.model, maxTokens: agent.maxTokens, system, prompt: message, history });
+        const { text, usage } = await guarded(taskId, () => callWithBackups({ provider: agent.provider, model: task.model || agent.model, maxTokens: agent.maxTokens, system, prompt: message, history }));
         store.addUsage(taskId, usage);
         store.setThread(taskId, [...history, { role: 'user', content: message }, { role: 'assistant', content: text }]);
         return store.updateTask(taskId, { status: 'done', output: text, finishedAt: new Date().toISOString() });
@@ -117,7 +142,6 @@ export function createRunner(store, { complete: call = complete, company = {}, n
         // Keep the earlier answer; just report that the follow-up failed.
         return store.updateTask(taskId, { status: 'done', error: `Follow-up failed: ${err.message}`, finishedAt: new Date().toISOString() });
       } finally {
-        release();
         running.delete(taskId);
       }
     },

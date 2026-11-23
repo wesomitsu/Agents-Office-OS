@@ -301,3 +301,11 @@ test('POST /api/tasks/bulk makes one task per item', async () => {
     assert.equal((await api('POST', '/api/tasks/bulk', { title: 'Reply', agentId: 'ghost', items: ['a'] })).status, 400);
   });
 });
+
+test('POST /api/tasks/:id/stop only works on running tasks', async () => {
+  await withServer(async (api) => {
+    const { data: t } = await api('POST', '/api/tasks', { title: 'Hi', agentId: 'social' });
+    assert.equal((await api('POST', `/api/tasks/${t.id}/stop`)).status, 400);
+    assert.equal((await api('POST', '/api/tasks/ghost/stop')).status, 404);
+  });
+});

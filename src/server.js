@@ -124,6 +124,11 @@ export function createApp({ store, runner, env = process.env }) {
         return [202, store.task(id)];
       },
     ],
+    ['POST', /^\/api\/tasks\/([\w-]+)\/stop$/, ([id]) => {
+      if (!store.task(id)) return null;
+      if (!runner.stop(id)) throw new Error('this task is not running');
+      return { ok: true };
+    }],
     [
       'POST',
       /^\/api\/tasks\/([\w-]+)\/handoff$/,

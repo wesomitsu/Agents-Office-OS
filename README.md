@@ -17,6 +17,7 @@ them work, and read what they hand back.
 - **Readable results**: formatted output you can copy or download as Markdown, or export every task as CSV
 - **Edit**: change a waiting task's title, details, agent, priority, due date or repeat before it runs
 - **Restart-safe**: tasks cut off by a restart or crash move to Needs attention instead of looking busy forever
+- **Stop**: ■ Stop on a working task cancels it (it moves to Needs attention, ready to retry)
 - **Undo**: deleted a task by mistake? Click Undo in the bar that appears
 - **Duplicate**: copy any task into the new-task form to tweak and reuse it
 - **Remembers your view**: the board's search and agent filter stay put when you reload
@@ -162,6 +163,7 @@ work for.
 | `GET` | `/api/office` | Agents, tasks and provider status |
 | `POST` | `/api/tasks` | Create a task `{ title, details, agentId, priority, due, repeat }` (`high`/`normal`/`low`, due as `YYYY-MM-DD`, repeat `daily`/`weekly`) |
 | `POST` | `/api/tasks/:id/run` | Start (or redo) a task |
+| `POST` | `/api/tasks/:id/stop` | Stop a running or queued task (it fails with "Stopped") |
 | `POST` | `/api/tasks/:id/handoff` | Pass a finished result to another agent `{ agentId, note, run }` |
 | `POST` | `/api/tasks/:id/reply` | Send a follow-up `{ message }` on a finished task |
 | `PATCH`/`DELETE` | `/api/tasks/:id` | Edit or delete a task |
