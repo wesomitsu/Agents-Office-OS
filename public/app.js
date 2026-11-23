@@ -15,6 +15,7 @@ function openTaskForm(task) {
   $('#task-form h3').textContent = task ? 'Edit task' : 'New task';
   f.querySelector('button[value=ok]').textContent = task ? 'Save' : 'Create';
   f.elements.run.closest('label').hidden = Boolean(task);
+  f.elements.bulk.closest('label').hidden = Boolean(task);
   $('#task-dialog').showModal();
   if (task) {
     for (const k of ['title', 'details', 'agentId', 'priority', 'due', 'repeat', 'model']) f.elements[k].value = task[k] ?? '';
@@ -284,6 +285,14 @@ $('#task-dialog').addEventListener('close', async () => {
       if (editingTask) {
         await api('PATCH', `/api/tasks/${editingTask}`, fields);
         editingTask = null;
+        f.reset();
+        await refresh();
+        return;
+      }
+      if (f.elements.bulk.checked) {
+        if (fields.agentId === '__all__') throw new Error('Pick one agent for a list of tasks.');
+        const { details, ...rest } = fields;
+        await api('POST', '/api/tasks/bulk', { ...rest, items: details.split('\n'), run: f.elements.run.checked });
         f.reset();
         await refresh();
         return;

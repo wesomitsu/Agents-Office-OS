@@ -63,6 +63,22 @@ export function createApp({ store, runner, env = process.env }) {
     ],
     [
       'POST',
+      /^\/api\/tasks\/bulk$/,
+      (_, body) => {
+        // The same request over a list: one task per item, the item as its details.
+        const items = (Array.isArray(body.items) ? body.items : []).map((x) => String(x ?? '').trim()).filter(Boolean);
+        if (!items.length) throw new Error('add at least one item');
+        if (items.length > 50) throw new Error('at most 50 items at once');
+        const { items: _items, run: _run, details: _details, ...fields } = body;
+        if (!String(fields.title ?? '').trim()) throw new Error('title is required');
+        if (!store.agent(fields.agentId)) throw new Error(`unknown agent "${fields.agentId}"`);
+        const tasks = items.map((details) => store.addTask({ ...fields, details }));
+        if (body.run) for (const t of tasks) runner.run(t.id).catch(() => {});
+        return [201, { tasks }];
+      },
+    ],
+    [
+      'POST',
       /^\/api\/tasks\/(start-all|retry-failed)$/,
       ([which], body) => {
         // Starts every waiting task, or retries every failed one (optionally one

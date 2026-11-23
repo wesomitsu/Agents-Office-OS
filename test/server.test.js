@@ -291,6 +291,17 @@ test('backupProviders keeps only ready, known providers in order', async () => {
   assert.deepEqual(backupProviders({}), []);
 });
 
+test('POST /api/tasks/bulk makes one task per item', async () => {
+  await withServer(async (api) => {
+    const { status, data } = await api('POST', '/api/tasks/bulk', { title: 'Reply', agentId: 'support', priority: 'high', items: ['Ticket 1', ' ', 'Ticket 2'] });
+    assert.equal(status, 201);
+    assert.deepEqual(data.tasks.map((t) => [t.title, t.details, t.priority]), [['Reply', 'Ticket 1', 'high'], ['Reply', 'Ticket 2', 'high']]);
+    assert.equal((await api('POST', '/api/tasks/bulk', { title: 'Reply', agentId: 'support', items: [] })).status, 400);
+    assert.equal((await api('POST', '/api/tasks/bulk', { title: 'Reply', agentId: 'support', items: Array(51).fill('x') })).status, 400);
+    assert.equal((await api('POST', '/api/tasks/bulk', { title: 'Reply', agentId: 'ghost', items: ['a'] })).status, 400);
+  });
+});
+
 test('POST /api/tasks/:id/stop only works on running tasks', async () => {
   await withServer(async (api) => {
     const { data: t } = await api('POST', '/api/tasks', { title: 'Hi', agentId: 'social' });
