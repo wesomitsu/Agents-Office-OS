@@ -135,7 +135,7 @@ function card(t) {
   const a = office.agents.find((x) => x.id === t.agentId);
   const buttons = {
     todo: `<button class="btn small" data-run="${t.id}">▶ Start</button><button class="btn small" data-preview="${t.id}" title="See exactly what the agent will receive">👁</button><button class="btn small" data-edit="${t.id}" title="Edit">✎</button>`,
-    working: `<span class="who">${office.waiting?.includes(t.id) ? 'Waiting for a free slot…' : 'Working on it…'}</span>`,
+    working: `<span class="who">${office.waiting?.includes(t.id) ? 'Waiting for a free slot…' : 'Working on it…'}</span><button class="btn small" data-stop="${t.id}" title="Stop this task">■ Stop</button>`,
     done: `<button class="btn small" data-view="${t.id}">View result</button><button class="btn small" data-run="${t.id}">↻ Redo</button>`,
     failed: `<button class="btn small" data-run="${t.id}">↻ Retry</button>`,
   }[t.status];
@@ -176,7 +176,7 @@ document.addEventListener('click', async (e) => {
     search = $('#search').value.toLowerCase();
     return render();
   }
-  const t = e.target.closest('[data-run],[data-view],[data-delete],[data-dup],[data-edit],[data-preview],[data-agent],#add-agent,#new-task');
+  const t = e.target.closest('[data-run],[data-stop],[data-view],[data-delete],[data-dup],[data-edit],[data-preview],[data-agent],#add-agent,#new-task');
   if (!t) return;
   try {
     if (t.id === 'new-task') return openTaskForm(null);
@@ -204,6 +204,7 @@ document.addEventListener('click', async (e) => {
     }
     if (t.dataset.agent) return openAgent(office.agents.find((a) => a.id === t.dataset.agent));
     if (t.dataset.run) await api('POST', `/api/tasks/${t.dataset.run}/run`);
+    if (t.dataset.stop) await api('POST', `/api/tasks/${t.dataset.stop}/stop`);
     if (t.dataset.delete) {
       const gone = office.tasks.find((x) => x.id === t.dataset.delete);
       await api('DELETE', `/api/tasks/${t.dataset.delete}`);

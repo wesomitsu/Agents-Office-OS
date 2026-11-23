@@ -290,3 +290,11 @@ test('backupProviders keeps only ready, known providers in order', async () => {
   assert.deepEqual(backupProviders({ BACKUP_PROVIDERS: 'openai, anthropic ,nope,demo', ANTHROPIC_API_KEY: 'x' }), ['anthropic', 'demo']);
   assert.deepEqual(backupProviders({}), []);
 });
+
+test('POST /api/tasks/:id/stop only works on running tasks', async () => {
+  await withServer(async (api) => {
+    const { data: t } = await api('POST', '/api/tasks', { title: 'Hi', agentId: 'social' });
+    assert.equal((await api('POST', `/api/tasks/${t.id}/stop`)).status, 400);
+    assert.equal((await api('POST', '/api/tasks/ghost/stop')).status, 404);
+  });
+});
