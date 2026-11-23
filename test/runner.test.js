@@ -251,3 +251,22 @@ test('fails a task that takes longer than the timeout', async () => {
   assert.match(result.error, /Timed out/);
   assert.equal(runner.isRunning(t.id), false);
 });
+
+test('stops a running task and a queued one, freeing the slot', async () => {
+  const s = store();
+  const a = s.addTask({ title: 'A', agentId: 'social' });
+  const b = s.addTask({ title: 'B', agentId: 'social' });
+  const c = s.addTask({ title: 'C', agentId: 'social' });
+  const runner = createRunner(s, { maxConcurrent: 1, complete: ({ prompt }) => (prompt === 'C' ? Promise.resolve({ text: 'ok', usage: { input: 0, output: 0 } }) : new Promise(() => {})) });
+  const ra = runner.run(a.id);
+  const rb = runner.run(b.id);
+  await new Promise((r) => setImmediate(r));
+  assert.deepEqual(runner.waitingIds(), [b.id]);
+  assert.equal(runner.stop(b.id), true);
+  assert.equal((await rb).error, 'Stopped');
+  assert.deepEqual(runner.waitingIds(), []);
+  assert.equal(runner.stop(a.id), true);
+  assert.equal((await ra).status, 'failed');
+  assert.equal(runner.stop(a.id), false);
+  assert.equal((await runner.run(c.id)).status, 'done');
+});
