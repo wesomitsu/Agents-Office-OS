@@ -10,11 +10,20 @@ export function buildPrompt(agent, task, company = {}) {
   return { system, prompt };
 }
 
-export function createRunner(store, { complete: call = complete, company = {}, notify = async () => {}, maxConcurrent = 3, backups = [] } = {}) {
+export function createRunner(store, { complete: call = complete, company = {}, notify = async () => {}, maxConcurrent = 3, backups = [], timeoutMs = 0 } = {}) {
   const running = new Set();
   // If the agent's provider fails (down, rate-limited, out of credit), try
   // each backup provider in order with its default model.
-  async function callWithBackups(req) {
+  // timeoutMs > 0: a run that takes longer fails instead of holding a slot forever.
+  function callWithBackups(req) {
+    if (!timeoutMs) return tryProviders(req);
+    let timer;
+    const limit = new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error(`Timed out after ${Math.round(timeoutMs / 1000)} seconds`)), timeoutMs);
+    });
+    return Promise.race([tryProviders(req), limit]).finally(() => clearTimeout(timer));
+  }
+  async function tryProviders(req) {
     const order = [req.provider, ...backups.filter((b) => b !== req.provider)];
     const errors = [];
     for (const [i, provider] of order.entries()) {

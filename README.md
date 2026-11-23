@@ -81,6 +81,9 @@ finishes.
 If an OpenAI-compatible API is busy (429) or briefly down (5xx), the request is
 retried up to 3 times. The Anthropic SDK has its own retries.
 
+A task that takes longer than 10 minutes fails with "Timed out" so a hung
+provider can't hold a slot forever (`TASK_TIMEOUT_SECONDS`, `0` for no limit).
+
 Set `BACKUP_PROVIDERS` to an ordered list of your other providers, e.g.
 `BACKUP_PROVIDERS=openai,anthropic`. If an agent's provider fails (down,
 rate-limited, out of credit), the task is retried on each backup in turn with

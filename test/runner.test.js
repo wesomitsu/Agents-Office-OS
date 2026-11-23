@@ -241,3 +241,13 @@ test('reports every provider error when all backups fail', async () => {
   assert.equal(result.status, 'failed');
   assert.equal(result.error, 'anthropic down | backup openai: openai down');
 });
+
+test('fails a task that takes longer than the timeout', async () => {
+  const s = store();
+  const t = s.addTask({ title: 'Slow', agentId: 'social' });
+  const runner = createRunner(s, { complete: () => new Promise(() => {}), timeoutMs: 50 });
+  const result = await runner.run(t.id);
+  assert.equal(result.status, 'failed');
+  assert.match(result.error, /Timed out/);
+  assert.equal(runner.isRunning(t.id), false);
+});

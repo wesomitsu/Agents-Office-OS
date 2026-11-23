@@ -266,6 +266,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     notify: createNotifier(),
     maxConcurrent: Number(process.env.MAX_CONCURRENT_TASKS ?? 3),
     backups: backupProviders(process.env),
+    timeoutMs: Number(process.env.TASK_TIMEOUT_SECONDS ?? 600) * 1000,
   });
   const port = Number(process.env.PORT ?? 3000);
   // Bind to localhost only: the office can spend your API credit, so it
