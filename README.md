@@ -23,6 +23,7 @@ them work, and read what they hand back.
 - **Tags**: label tasks (`launch`, `q4`...) and click a tag to see every task with it
 - **Prompt preview**: 👁 on a waiting task shows exactly what the agent will be sent
 - **Per-task model**: use a stronger (or cheaper) model for one task without changing the agent
+- **Task lists**: tick "One task per line" and each line of Details becomes its own task (e.g. one support reply per ticket)
 - **Ask everyone**: pick "📢 Everyone on duty" to give the same task to every agent and compare their answers
 - **Repeating tasks**: set a task to repeat daily or weekly and the next one is queued when it's done
 - **Ratings**: 👍 or 👎 a result; each desk shows the totals, so you can see which agent (or model) works best
@@ -167,6 +168,7 @@ work for.
 | `GET` | `/api/tasks/:id/prompt` | The exact instructions and task text the agent will receive (no model call) |
 | `POST` | `/api/tasks/:id/restore` | Undo a delete (the last 20 deleted tasks are kept) |
 | `POST` | `/api/tasks/broadcast` | One task per agent `{ title, ..., agentIds?, run? }` (default: everyone on duty) |
+| `POST` | `/api/tasks/bulk` | One task per item `{ title, items, agentId, ..., run? }`, each item as the details (at most 50) |
 | `POST` | `/api/tasks/retry-failed` | Retry every failed task `{ agentId? }` |
 | `POST` | `/api/tasks/start-all` | Start every waiting task `{ agentId? }` (off-duty agents are skipped) |
 | `POST` | `/api/tasks/clear-done` | Delete finished tasks `{ agentId? }` |
