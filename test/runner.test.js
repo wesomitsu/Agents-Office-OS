@@ -270,3 +270,20 @@ test('stops a running task and a queued one, freeing the slot', async () => {
   assert.equal(runner.stop(a.id), false);
   assert.equal((await runner.run(c.id)).status, 'done');
 });
+
+test('weekday and monthly repeats pick the right next due date', async () => {
+  const runner = (s) => createRunner(s, { complete: async () => ({ text: 'ok', usage: { input: 0, output: 0 } }) });
+  for (const [repeat, due, next] of [
+    ['weekdays', '2026-11-27', '2026-11-30'], // Friday -> Monday
+    ['weekdays', '2026-11-24', '2026-11-25'],
+    ['monthly', '2026-01-31', '2026-02-28'],
+    ['monthly', '2026-12-15', '2027-01-15'],
+  ]) {
+    const s = store();
+    const t = s.addTask({ title: 'Report', agentId: 'marketing', repeat, due });
+    await runner(s).run(t.id);
+    const n = s.tasks().find((x) => x.id !== t.id);
+    assert.equal(n.due, next, `${repeat} from ${due}`);
+    assert.equal(n.repeat, repeat);
+  }
+});

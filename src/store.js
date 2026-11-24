@@ -6,7 +6,7 @@ import { DEFAULT_AGENTS } from './defaults.js';
 const AGENT_FIELDS = ['name', 'role', 'emoji', 'provider', 'model', 'instructions', 'priceIn', 'priceOut', 'offDuty', 'maxTokens'];
 const STATUSES = new Set(['todo', 'working', 'done', 'failed']);
 const PRIORITIES = new Set(['high', 'normal', 'low']);
-const REPEATS = new Set(['', 'daily', 'weekly']);
+const REPEATS = new Set(['', 'daily', 'weekdays', 'weekly', 'monthly']);
 
 // Due dates are plain calendar days (YYYY-MM-DD) or empty.
 function checkDue(due) {
@@ -184,7 +184,7 @@ export function createStore(path, { backups = 7, today = () => new Date().toISOS
       due = checkDue(due);
       tags = checkTags(tags);
       model = checkModel(model);
-      if (!REPEATS.has(repeat)) throw new Error(`bad repeat "${repeat}" (use daily or weekly)`);
+      if (!REPEATS.has(repeat)) throw new Error(`bad repeat "${repeat}" (use daily, weekdays, weekly or monthly)`);
       if (!PRIORITIES.has(priority)) throw new Error(`bad priority "${priority}"`);
       if (!title) throw new Error('title is required');
       if (!agent(agentId)) throw new Error(`unknown agent "${agentId}"`);
@@ -246,7 +246,7 @@ export function createStore(path, { backups = 7, today = () => new Date().toISOS
       if ('model' in changes) changes = { ...changes, model: checkModel(changes.model) };
       if ('tags' in changes) t.tags = checkTags(changes.tags);
       if ('rating' in changes && !['up', 'down', ''].includes(changes.rating)) throw new Error(`bad rating "${changes.rating}" (use up, down or empty)`);
-      if ('repeat' in changes && !REPEATS.has(changes.repeat)) throw new Error(`bad repeat "${changes.repeat}" (use daily or weekly)`);
+      if ('repeat' in changes && !REPEATS.has(changes.repeat)) throw new Error(`bad repeat "${changes.repeat}" (use daily, weekdays, weekly or monthly)`);
       if ('agentId' in changes && !agent(changes.agentId)) throw new Error(`unknown agent "${changes.agentId}"`);
       if ('title' in changes && !String(changes.title).trim()) throw new Error('title is required');
       if (changes.priority && !PRIORITIES.has(changes.priority)) throw new Error(`bad priority "${changes.priority}"`);
@@ -296,9 +296,19 @@ export function createStore(path, { backups = 7, today = () => new Date().toISOS
     scheduleNext(id) {
       const t = state.tasks.find((x) => x.id === id);
       if (!t || t.status !== 'done' || !t.repeat || t.nextCreated) return null;
-      const days = t.repeat === 'weekly' ? 7 : 1;
       const base = t.due ? new Date(`${t.due}T00:00:00Z`) : new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00Z');
-      base.setUTCDate(base.getUTCDate() + days);
+      if (t.repeat === 'monthly') {
+        // Same day next month, or that month's last day (Jan 31 -> Feb 28).
+        const day = base.getUTCDate();
+        base.setUTCDate(1);
+        base.setUTCMonth(base.getUTCMonth() + 1);
+        const last = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth() + 1, 0)).getUTCDate();
+        base.setUTCDate(Math.min(day, last));
+      } else {
+        base.setUTCDate(base.getUTCDate() + (t.repeat === 'weekly' ? 7 : 1));
+        // Weekdays skip Saturday and Sunday.
+        while (t.repeat === 'weekdays' && [0, 6].includes(base.getUTCDay())) base.setUTCDate(base.getUTCDate() + 1);
+      }
       t.nextCreated = true;
       return this.addTask({ title: t.title, details: t.details, agentId: t.agentId, priority: t.priority, repeat: t.repeat, model: t.model, tags: t.tags, due: base.toISOString().slice(0, 10) });
     },
