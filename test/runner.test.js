@@ -287,3 +287,20 @@ test('weekday and monthly repeats pick the right next due date', async () => {
     assert.equal(n.repeat, repeat);
   }
 });
+
+test('an agent over budget does not start new tasks or follow-ups', async () => {
+  const s = store();
+  s.updateAgent('support', { priceIn: '1000', priceOut: '1000', budget: '1' });
+  const runner = createRunner(s, { complete: async () => ({ text: 'ok', usage: { input: 600, output: 600 } }) });
+  const first = await runner.run(s.addTask({ title: 'a', agentId: 'support' }).id);
+  assert.equal(first.status, 'done'); // spent $1.20 of $1
+  const second = await runner.run(s.addTask({ title: 'b', agentId: 'support' }).id);
+  assert.equal(second.status, 'failed');
+  assert.match(second.error, /reached their \$1 budget/);
+  const reply = await runner.reply(first.id, 'shorter');
+  assert.equal(reply.status, 'done');
+  assert.match(reply.error, /Follow-up failed: .*budget/);
+  s.updateAgent('support', { budget: '' });
+  assert.equal((await runner.run(s.tasks()[1].id)).status, 'done');
+  assert.throws(() => s.updateAgent('support', { budget: 'lots' }), /budget must be/);
+});

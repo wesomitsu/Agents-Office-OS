@@ -163,8 +163,8 @@ function openAgent(agent) {
   $('#agent-template').innerHTML =
     '<option value="">Blank agent</option>' +
     (office.templates ?? []).map((t, i) => `<option value="${i}">${esc(t.emoji)} ${esc(t.role)}</option>`).join('');
-  const values = agent ?? { emoji: '🤖', name: '', role: '', provider: 'demo', model: '', instructions: '', priceIn: '', priceOut: '', maxTokens: '' };
-  for (const k of ['emoji', 'name', 'role', 'provider', 'model', 'instructions', 'priceIn', 'priceOut', 'maxTokens']) f.elements[k].value = values[k] ?? '';
+  const values = agent ?? { emoji: '🤖', name: '', role: '', provider: 'demo', model: '', instructions: '', priceIn: '', priceOut: '', maxTokens: '', budget: '' };
+  for (const k of ['emoji', 'name', 'role', 'provider', 'model', 'instructions', 'priceIn', 'priceOut', 'maxTokens', 'budget']) f.elements[k].value = values[k] ?? '';
   f.elements.offDuty.checked = values.offDuty === 'true';
   $('#agent-dialog').showModal();
 }
@@ -317,7 +317,7 @@ $('#task-dialog').addEventListener('close', async () => {
 $('#agent-dialog').addEventListener('close', async () => {
   const d = $('#agent-dialog');
   const f = $('#agent-form');
-  const body = Object.fromEntries(['emoji', 'name', 'role', 'provider', 'model', 'instructions', 'priceIn', 'priceOut', 'maxTokens'].map((k) => [k, f.elements[k].value]));
+  const body = Object.fromEntries(['emoji', 'name', 'role', 'provider', 'model', 'instructions', 'priceIn', 'priceOut', 'maxTokens', 'budget'].map((k) => [k, f.elements[k].value]));
   body.offDuty = f.elements.offDuty.checked ? 'true' : '';
   try {
     if (d.returnValue === 'ok') await (editingAgent ? api('PATCH', `/api/agents/${editingAgent.id}`, body) : api('POST', '/api/agents', body));
