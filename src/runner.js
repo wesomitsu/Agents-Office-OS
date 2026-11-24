@@ -77,6 +77,12 @@ export function createRunner(store, { complete: call = complete, company = {}, n
     }
   }
 
+  // Once an agent's estimated spend reaches its budget, its tasks don't start.
+  function overBudget(agent) {
+    const spent = store.stats()[agent.id]?.cost;
+    return agent.budget && spent !== null && spent >= Number(agent.budget) ? `${agent.name} has reached their $${agent.budget} budget` : '';
+  }
+
   return {
     isRunning: (taskId) => running.has(taskId),
     // Stops a running (or waiting) task; it moves to failed with "Stopped".
@@ -95,6 +101,8 @@ export function createRunner(store, { complete: call = complete, company = {}, n
       const agent = store.agent(task.agentId);
       if (!agent) throw new Error('the agent for this task was removed');
       if (agent.offDuty === 'true') throw new Error(`${agent.name} is off duty`);
+      const broke = overBudget(agent);
+      if (broke) return store.updateTask(taskId, { status: 'failed', error: broke, finishedAt: new Date().toISOString() });
 
       running.add(taskId);
       store.updateTask(taskId, { status: 'working', error: '', startedAt: new Date().toISOString(), finishedAt: '' });
@@ -128,6 +136,8 @@ export function createRunner(store, { complete: call = complete, company = {}, n
       if (running.has(taskId)) throw new Error('task is already running');
       const agent = store.agent(task.agentId);
       if (!agent) throw new Error('the agent for this task was removed');
+      const broke = overBudget(agent);
+      if (broke) return store.updateTask(taskId, { error: `Follow-up failed: ${broke}` });
 
       running.add(taskId);
       const history = task.thread;

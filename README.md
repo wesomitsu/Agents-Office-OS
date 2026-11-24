@@ -108,7 +108,9 @@ Click a desk to rename an agent, change its emoji, job, provider, model or
 instructions. Set **Max answer length** to cap how many tokens one answer can use (a simple
 way to keep costs predictable). Add the model's input and output prices ($ per 1M tokens, from your
 provider's pricing page) and the desk shows an estimate of what that agent has
-spent, based on the tokens its tasks used. Use ◀ ▶ in a desk's dialog to rearrange the office, and **Copy** to hire another
+spent, based on the tokens its tasks used. With prices set, a **Budget** (in $) stops that agent's
+tasks and follow-ups from starting once the estimate reaches it; they fail with "reached their budget"
+until you raise it. Use ◀ ▶ in a desk's dialog to rearrange the office, and **Copy** to hire another
 agent with the same setup (for example a second support agent on a cheaper model).
 
 Tick **Off duty** on a desk to stop an agent taking new tasks (they can't be
