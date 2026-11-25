@@ -155,6 +155,23 @@ test('exports tasks as CSV and neutralises formulas', async () => {
   });
 });
 
+test('downloads finished results as one Markdown report', async () => {
+  await withServer(async (api, base) => {
+    const empty = await (await fetch(`${base}/api/results.md`)).text();
+    assert.match(empty, /No finished tasks yet/);
+    const t = (await api('POST', '/api/tasks', { title: 'Reply to Ana', agentId: 'support' })).data;
+    await api('POST', '/api/tasks', { title: 'Not run yet', agentId: 'support' });
+    await api('POST', `/api/tasks/${t.id}/run`);
+    for (let i = 0; i < 50 && (await api('GET', '/api/office')).data.tasks.find((x) => x.id === t.id).status !== 'done'; i++) await new Promise((r) => setTimeout(r, 20));
+    const res = await fetch(`${base}/api/results.md`);
+    assert.match(res.headers.get('content-type'), /text\/markdown/);
+    assert.match(res.headers.get('content-disposition'), /agents-office-results\.md/);
+    const md = await res.text();
+    assert.match(md, /^# Results\n\n## Reply to Ana\n\n_.*Sage, \d{4}-\d\d-\d\d_\n\nAll done\n/);
+    assert.ok(!md.includes('Not run yet'));
+  });
+});
+
 test('starts all waiting tasks, skipping off-duty agents', async () => {
   await withServer(async (api) => {
     await api('POST', '/api/tasks', { title: 'a', agentId: 'support' });

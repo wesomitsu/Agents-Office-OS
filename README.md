@@ -14,7 +14,7 @@ them work, and read what they hand back.
 - **Bring any AI**: Anthropic (Claude), any OpenAI-compatible API (OpenAI, OpenRouter, Groq, Together, a local Ollama), or the built-in demo
 - **One model per agent**: put your support agent on a fast, cheap model and your bug fixer on a strong one
 - **Task board**: to do, working, done and needs attention, updated live, with high-priority tasks on top and overdue tasks flagged
-- **Readable results**: formatted output you can copy or download as Markdown, or export every task as CSV
+- **Readable results**: formatted output you can copy or download as Markdown, export every task as CSV, or download every finished result in one Markdown report
 - **Edit**: change a waiting task's title, details, agent, priority, due date or repeat before it runs
 - **Restart-safe**: tasks cut off by a restart or crash move to Needs attention instead of looking busy forever
 - **Stop**: ■ Stop on a working task cancels it (it moves to Needs attention, ready to retry)
@@ -177,6 +177,7 @@ work for.
 | `POST` | `/api/tasks/start-all` | Start every waiting task `{ agentId? }` (off-duty agents are skipped) |
 | `POST` | `/api/tasks/clear-done` | Delete finished tasks `{ agentId? }` |
 | `GET` | `/api/tasks.csv` | Download every task as a spreadsheet |
+| `GET` | `/api/results.md` | Download every finished result, newest first, as one Markdown file |
 | `PUT` | `/api/company` | Save the company profile `{ name, about, brief }` |
 | `GET`/`POST` | `/api/export`, `/api/import` | Save or load the team `{ agents }` |
 | `POST` | `/api/agents` | Hire an agent |

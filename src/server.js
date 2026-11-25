@@ -25,6 +25,7 @@ export function createApp({ store, runner, env = process.env }) {
   const routes = [
     ['GET', /^\/api\/office$/, () => ({ company: company(), providers: providerStatus(env), templates: AGENT_TEMPLATES, agents: store.agents(), stats: store.stats(), waiting: runner.waitingIds?.() ?? [], activity: store.activity().slice(0, 30), tasks: store.tasks() })],
     ['GET', /^\/api\/tasks\.csv$/, () => ({ raw: tasksCsv(store), type: 'text/csv; charset=utf-8', filename: 'agents-office-tasks.csv' })],
+    ['GET', /^\/api\/results\.md$/, () => ({ raw: resultsMarkdown(store), type: 'text/markdown; charset=utf-8', filename: 'agents-office-results.md' })],
     ['PUT', /^\/api\/company$/, (_, body) => (store.setCompany(body), company())],
     ['GET', /^\/api\/export$/, () => ({ app: 'agents-office-os', version: 1, agents: store.agents() })],
     ['POST', /^\/api\/import$/, (_, body) => ({ agents: store.importAgents(body.agents) })],
@@ -238,6 +239,18 @@ export function tasksCsv(store) {
       (t.usage?.input ?? 0) + (t.usage?.output ?? 0), t.details, t.output, t.error];
   });
   return '\ufeff' + [head, ...rows].map((r) => r.map(cell).join(',')).join('\r\n') + '\r\n';
+}
+
+// Every finished result in one Markdown file, newest first, to read or share.
+export function resultsMarkdown(store) {
+  const done = store.tasks().filter((t) => t.status === 'done' && t.output)
+    .sort((a, b) => String(b.finishedAt ?? '').localeCompare(String(a.finishedAt ?? '')));
+  const parts = done.map((t) => {
+    const a = store.agent(t.agentId);
+    const by = [a ? `${a.emoji ?? ''} ${a.name}`.trim() : '', t.finishedAt?.slice(0, 10)].filter(Boolean).join(', ');
+    return `## ${t.title}\n\n${by ? `_${by}_\n\n` : ''}${t.output.trim()}\n`;
+  });
+  return `# Results\n\n${parts.length ? parts.join('\n---\n\n') : 'No finished tasks yet.\n'}`;
 }
 
 async function readJson(req) {
