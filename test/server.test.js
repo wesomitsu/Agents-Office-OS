@@ -326,3 +326,22 @@ test('POST /api/tasks/:id/stop only works on running tasks', async () => {
     assert.equal((await api('POST', '/api/tasks/ghost/stop')).status, 404);
   });
 });
+
+test('tasks marked to start on their due date start once the day comes', async () => {
+  const { startDueTasks } = await import('../src/server.js');
+  const store = createStore(join(mkdtempSync(join(tmpdir(), 'office-')), 'office.json'));
+  const runner = createRunner(store, { complete: async () => ({ text: 'Done', usage: { input: 1, output: 1 } }) });
+  assert.throws(() => store.addTask({ title: 'x', agentId: 'support', autoStart: true }), /pick a due date/);
+  const due = store.addTask({ title: 'Due today', agentId: 'support', due: '2026-11-26', autoStart: true });
+  const later = store.addTask({ title: 'Later', agentId: 'support', due: '2026-11-27', autoStart: true });
+  const manual = store.addTask({ title: 'Manual', agentId: 'support', due: '2026-11-20' });
+  store.updateAgent('marketing', { offDuty: 'true' });
+  const off = store.addTask({ title: 'Off duty', agentId: 'marketing', due: '2026-11-20', autoStart: 'true' });
+  assert.equal(startDueTasks(store, runner, '2026-11-26'), 1);
+  await new Promise((r) => setTimeout(r, 20));
+  assert.equal(store.task(due.id).status, 'done');
+  for (const t of [later, manual, off]) assert.equal(store.task(t.id).status, 'todo');
+  assert.equal(startDueTasks(store, runner, '2026-11-26'), 0);
+  assert.throws(() => store.updateTask(later.id, { due: '' }), /pick a due date/);
+  assert.equal(store.updateTask(later.id, { autoStart: false, due: '' }).autoStart, '');
+});

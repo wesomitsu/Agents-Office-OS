@@ -20,6 +20,7 @@ function openTaskForm(task) {
   if (task) {
     for (const k of ['title', 'details', 'agentId', 'priority', 'due', 'repeat', 'model']) f.elements[k].value = task[k] ?? '';
     f.elements.tags.value = (task.tags ?? []).join(', ');
+    f.elements.autoStart.checked = task.autoStart === 'true';
   }
 }
 let lastJson = '';
@@ -144,7 +145,7 @@ function card(t) {
     <div class="who">${esc(a?.emoji ?? '❔')} ${esc(a?.name ?? 'Removed agent')}${t.priority === 'high' ? ' <span class="prio high">High</span>' : t.priority === 'low' ? ' <span class="prio low">Low</span>' : ''}</div>
     <div class="title">${esc(t.title)}</div>
     ${t.tags?.length ? `<div class="tags">${t.tags.map((x) => `<button class="tag-chip" data-tag="${esc(x)}">#${esc(x)}</button>`).join('')}</div>` : ''}
-    ${dueLabel(t)}${t.model ? `<div class="due">Model: ${esc(t.model)}</div>` : ''}${t.repeat ? `<div class="due">↻ Repeats ${esc(t.repeat)}</div>` : ''}
+    ${dueLabel(t)}${t.model ? `<div class="due">Model: ${esc(t.model)}</div>` : ''}${t.repeat ? `<div class="due">↻ Repeats ${esc(t.repeat)}</div>` : ''}${t.autoStart === 'true' && t.status === 'todo' ? '<div class="due">⏰ Starts on its due date</div>' : ''}
     ${t.usage && t.usage.input + t.usage.output ? `<div class="tokens">${fmtTokens(t.usage.input + t.usage.output)} tokens</div>` : ''}
     ${t.error ? `<div class="err">${esc(t.error)}</div>` : ''}
     <div class="buttons">${buttons}<button class="btn small" data-dup="${t.id}" title="Make a copy to edit">⧉</button>${t.status !== 'working' ? `<button class="btn small" data-delete="${t.id}" title="Delete">✕</button>` : ''}</div>
@@ -281,7 +282,7 @@ $('#task-dialog').addEventListener('close', async () => {
   if (d.returnValue !== 'ok') editingTask = null;
   if (d.returnValue === 'ok') {
     try {
-      const fields = { title: f.elements.title.value, details: f.elements.details.value, agentId: f.elements.agentId.value, priority: f.elements.priority.value, due: f.elements.due.value, repeat: f.elements.repeat.value, model: f.elements.model.value, tags: f.elements.tags.value };
+      const fields = { title: f.elements.title.value, details: f.elements.details.value, agentId: f.elements.agentId.value, priority: f.elements.priority.value, due: f.elements.due.value, repeat: f.elements.repeat.value, model: f.elements.model.value, tags: f.elements.tags.value, autoStart: f.elements.autoStart.checked };
       if (editingTask) {
         await api('PATCH', `/api/tasks/${editingTask}`, fields);
         editingTask = null;
@@ -304,7 +305,7 @@ $('#task-dialog').addEventListener('close', async () => {
         await refresh();
         return;
       }
-      const task = await api('POST', '/api/tasks', { title: f.elements.title.value, details: f.elements.details.value, agentId: f.elements.agentId.value, priority: f.elements.priority.value, due: f.elements.due.value, repeat: f.elements.repeat.value, model: f.elements.model.value, tags: f.elements.tags.value });
+      const task = await api('POST', '/api/tasks', fields);
       if (f.elements.run.checked) await api('POST', `/api/tasks/${task.id}/run`);
       f.reset();
       await refresh();
