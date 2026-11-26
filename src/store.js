@@ -182,8 +182,10 @@ export function createStore(path, { backups = 7, today = () => new Date().toISOS
     tasks: () => state.tasks,
     task: (id) => state.tasks.find((t) => t.id === id),
 
-    addTask({ title, details = '', agentId, priority = 'normal', due = '', repeat = '', model = '', tags = [] }) {
+    addTask({ title, details = '', agentId, priority = 'normal', due = '', repeat = '', model = '', tags = [], autoStart = '' }) {
       due = checkDue(due);
+      autoStart = autoStart === true || autoStart === 'true' ? 'true' : '';
+      if (autoStart && !due) throw new Error('pick a due date to start a task automatically');
       tags = checkTags(tags);
       model = checkModel(model);
       if (!REPEATS.has(repeat)) throw new Error(`bad repeat "${repeat}" (use daily, weekdays, weekly or monthly)`);
@@ -200,6 +202,7 @@ export function createStore(path, { backups = 7, today = () => new Date().toISOS
         repeat,
         model,
         tags,
+        autoStart,
         status: 'todo',
         output: '',
         error: '',
@@ -248,11 +251,13 @@ export function createStore(path, { backups = 7, today = () => new Date().toISOS
       if ('model' in changes) changes = { ...changes, model: checkModel(changes.model) };
       if ('tags' in changes) t.tags = checkTags(changes.tags);
       if ('rating' in changes && !['up', 'down', ''].includes(changes.rating)) throw new Error(`bad rating "${changes.rating}" (use up, down or empty)`);
+      if ('autoStart' in changes) changes = { ...changes, autoStart: changes.autoStart === true || changes.autoStart === 'true' ? 'true' : '' };
+      if ((changes.autoStart ?? t.autoStart) && !(changes.due ?? t.due)) throw new Error('pick a due date to start a task automatically');
       if ('repeat' in changes && !REPEATS.has(changes.repeat)) throw new Error(`bad repeat "${changes.repeat}" (use daily, weekdays, weekly or monthly)`);
       if ('agentId' in changes && !agent(changes.agentId)) throw new Error(`unknown agent "${changes.agentId}"`);
       if ('title' in changes && !String(changes.title).trim()) throw new Error('title is required');
       if (changes.priority && !PRIORITIES.has(changes.priority)) throw new Error(`bad priority "${changes.priority}"`);
-      for (const k of ['status', 'priority', 'due', 'repeat', 'agentId', 'model', 'rating', 'output', 'error', 'title', 'details', 'startedAt', 'finishedAt']) if (k in changes) t[k] = String(changes[k]);
+      for (const k of ['status', 'priority', 'due', 'repeat', 'agentId', 'model', 'autoStart', 'rating', 'output', 'error', 'title', 'details', 'startedAt', 'finishedAt']) if (k in changes) t[k] = String(changes[k]);
       t.updatedAt = new Date().toISOString();
       save();
       return t;
@@ -312,7 +317,7 @@ export function createStore(path, { backups = 7, today = () => new Date().toISOS
         while (t.repeat === 'weekdays' && [0, 6].includes(base.getUTCDay())) base.setUTCDate(base.getUTCDate() + 1);
       }
       t.nextCreated = true;
-      return this.addTask({ title: t.title, details: t.details, agentId: t.agentId, priority: t.priority, repeat: t.repeat, model: t.model, tags: t.tags, due: base.toISOString().slice(0, 10) });
+      return this.addTask({ title: t.title, details: t.details, agentId: t.agentId, priority: t.priority, repeat: t.repeat, model: t.model, tags: t.tags, autoStart: t.autoStart, due: base.toISOString().slice(0, 10) });
     },
 
     // Deleted tasks go to a small trash (the 20 most recent) so they can be undone.

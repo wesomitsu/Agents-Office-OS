@@ -304,3 +304,10 @@ test('an agent over budget does not start new tasks or follow-ups', async () => 
   assert.equal((await runner.run(s.tasks()[1].id)).status, 'done');
   assert.throws(() => s.updateAgent('support', { budget: 'lots' }), /budget must be/);
 });
+
+test('a repeating auto-start task keeps auto-start on its next copy', async () => {
+  const s = createStore(join(mkdtempSync(join(tmpdir(), 'office-')), 'office.json'));
+  const t = s.addTask({ title: 'Daily digest', agentId: 'marketing', repeat: 'daily', due: '2026-11-02', autoStart: true });
+  s.updateTask(t.id, { status: 'done' });
+  assert.equal(s.scheduleNext(t.id).autoStart, 'true');
+});

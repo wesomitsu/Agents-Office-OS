@@ -27,6 +27,7 @@ them work, and read what they hand back.
 - **Task lists**: tick "One task per line" and each line of Details becomes its own task (e.g. one support reply per ticket)
 - **Ask everyone**: pick "📢 Everyone on duty" to give the same task to every agent and compare their answers
 - **Repeating tasks**: set a task to repeat daily, on weekdays, weekly or monthly and the next one is queued when it's done
+- **Start on the due date**: tick "Start automatically on the due date" and the task starts by itself once that day comes (checked every minute while the office is open); with a repeat, every copy does the same, so a daily digest runs hands-free
 - **Ratings**: 👍 or 👎 a result; each desk shows the totals, so you can see which agent (or model) works best
 - **Activity feed**: the last 100 things that happened (tasks created, finished, failed, deleted)
 - **Follow-ups**: reply to a finished task ("make it shorter") and the agent revises it, keeping the conversation
@@ -163,7 +164,7 @@ work for.
 |---|---|---|
 | `GET` | `/api/health` | `{ ok: true }` for Docker and uptime monitors (no login needed) |
 | `GET` | `/api/office` | Agents, tasks and provider status |
-| `POST` | `/api/tasks` | Create a task `{ title, details, agentId, priority, due, repeat }` (`high`/`normal`/`low`, due as `YYYY-MM-DD`, repeat `daily`/`weekdays`/`weekly`/`monthly`) |
+| `POST` | `/api/tasks` | Create a task `{ title, details, agentId, priority, due, repeat, autoStart }` (`high`/`normal`/`low`, due as `YYYY-MM-DD`, repeat `daily`/`weekdays`/`weekly`/`monthly`, `autoStart: true` starts it on its due date) |
 | `POST` | `/api/tasks/:id/run` | Start (or redo) a task |
 | `POST` | `/api/tasks/:id/stop` | Stop a running or queued task (it fails with "Stopped") |
 | `POST` | `/api/tasks/:id/handoff` | Pass a finished result to another agent `{ agentId, note, run }` |

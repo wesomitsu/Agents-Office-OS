@@ -285,6 +285,19 @@ async function serveStatic(pathname, res) {
   }
 }
 
+// Starts waiting tasks marked "Start on due date" once their day has come
+// (skipping off-duty agents and tasks already running). Returns how many started.
+export function startDueTasks(store, runner, today = new Date().toISOString().slice(0, 10)) {
+  let started = 0;
+  for (const t of store.tasks()) {
+    if (t.status !== 'todo' || t.autoStart !== 'true' || !t.due || t.due > today) continue;
+    if (store.agent(t.agentId)?.offDuty === 'true' || runner.isRunning(t.id)) continue;
+    runner.run(t.id).catch(() => {});
+    started++;
+  }
+  return started;
+}
+
 // BACKUP_PROVIDERS=openai,anthropic: ready providers to fall back to, in order.
 export function backupProviders(env) {
   const ready = new Set(providerStatus(env).filter((p) => p.configured).map((p) => p.id));
@@ -302,6 +315,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     backups: backupProviders(process.env),
     timeoutMs: Number(process.env.TASK_TIMEOUT_SECONDS ?? 600) * 1000,
   });
+  startDueTasks(store, runner);
+  setInterval(() => startDueTasks(store, runner), 60_000).unref();
   const port = Number(process.env.PORT ?? 3000);
   // Bind to localhost only: the office can spend your API credit, so it
   // shouldn't be reachable from your network unless you put auth in front.
