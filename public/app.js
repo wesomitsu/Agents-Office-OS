@@ -53,7 +53,7 @@ function render() {
   $('#company').textContent = company.name ? `${company.name} · AI team` : 'Your AI team';
   $('#providers').innerHTML = providers
     .map((p) => `<span class="pill ${p.configured ? 'on' : 'off'}" title="${p.keyEnv ? (p.configured ? `${p.keyEnv} is set` : `Add ${p.keyEnv} to .env`) : 'Works without a key'}">${esc(p.label)}</span>`)
-    .join('');
+    .join('') + (office.spend !== null && office.spend !== undefined ? `<span class="pill spend" title="Estimated spend of every agent with prices set">Spent ~$${office.spend > 0 && office.spend < 0.01 ? '<0.01' : office.spend.toFixed(2)}</span>` : '');
 
   const busy = new Set(tasks.filter((t) => t.status === 'working').map((t) => t.agentId));
   $('#desks').innerHTML =

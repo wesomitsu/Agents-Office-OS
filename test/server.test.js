@@ -345,3 +345,18 @@ test('tasks marked to start on their due date start once the day comes', async (
   assert.throws(() => store.updateTask(later.id, { due: '' }), /pick a due date/);
   assert.equal(store.updateTask(later.id, { autoStart: false, due: '' }).autoStart, '');
 });
+
+test('GET /api/office totals the estimated spend of agents with prices', async () => {
+  await withServer(async (api) => {
+    assert.equal((await api('GET', '/api/office')).data.spend, null);
+    await api('PATCH', '/api/agents/support', { priceIn: '3000', priceOut: '1000' });
+    await api('PATCH', '/api/agents/bugs', { priceIn: '1000', priceOut: '1000' });
+    for (const agentId of ['support', 'bugs']) {
+      const t = await api('POST', '/api/tasks', { title: 'Go', agentId });
+      await api('POST', `/api/tasks/${t.data.id}/run`);
+    }
+    await new Promise((r) => setTimeout(r, 30));
+    // support: 10 in at $3000 + 20 out at $1000 = $0.05; bugs: 30 tokens at $1000 = $0.03 (per 1M)
+    assert.equal((await api('GET', '/api/office')).data.spend, 0.08);
+  });
+});

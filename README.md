@@ -109,7 +109,7 @@ Click a desk to rename an agent, change its emoji, job, provider, model or
 instructions. Set **Max answer length** to cap how many tokens one answer can use (a simple
 way to keep costs predictable). Add the model's input and output prices ($ per 1M tokens, from your
 provider's pricing page) and the desk shows an estimate of what that agent has
-spent, based on the tokens its tasks used. With prices set, a **Budget** (in $) stops that agent's
+spent, based on the tokens its tasks used; the header adds these up into the office's total spend. With prices set, a **Budget** (in $) stops that agent's
 tasks and follow-ups from starting once the estimate reaches it; they fail with "reached their budget"
 until you raise it. Use ◀ ▶ in a desk's dialog to rearrange the office, and **Copy** to hire another
 agent with the same setup (for example a second support agent on a cheaper model).
@@ -163,7 +163,7 @@ work for.
 | Method | Path | What it does |
 |---|---|---|
 | `GET` | `/api/health` | `{ ok: true }` for Docker and uptime monitors (no login needed) |
-| `GET` | `/api/office` | Agents, tasks and provider status |
+| `GET` | `/api/office` | Agents, tasks, provider status and estimated total `spend` (`null` until an agent has prices) |
 | `POST` | `/api/tasks` | Create a task `{ title, details, agentId, priority, due, repeat, autoStart }` (`high`/`normal`/`low`, due as `YYYY-MM-DD`, repeat `daily`/`weekdays`/`weekly`/`monthly`, `autoStart: true` starts it on its due date) |
 | `POST` | `/api/tasks/:id/run` | Start (or redo) a task |
 | `POST` | `/api/tasks/:id/stop` | Stop a running or queued task (it fails with "Stopped") |

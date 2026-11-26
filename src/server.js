@@ -23,7 +23,7 @@ export function createApp({ store, runner, env = process.env }) {
   const company = () => companyFor(store, env);
 
   const routes = [
-    ['GET', /^\/api\/office$/, () => ({ company: company(), providers: providerStatus(env), templates: AGENT_TEMPLATES, agents: store.agents(), stats: store.stats(), waiting: runner.waitingIds?.() ?? [], activity: store.activity().slice(0, 30), tasks: store.tasks() })],
+    ['GET', /^\/api\/office$/, () => ({ company: company(), providers: providerStatus(env), templates: AGENT_TEMPLATES, agents: store.agents(), ...spendAndStats(store), waiting: runner.waitingIds?.() ?? [], activity: store.activity().slice(0, 30), tasks: store.tasks() })],
     ['GET', /^\/api\/tasks\.csv$/, () => ({ raw: tasksCsv(store), type: 'text/csv; charset=utf-8', filename: 'agents-office-tasks.csv' })],
     ['GET', /^\/api\/results\.md$/, () => ({ raw: resultsMarkdown(store), type: 'text/markdown; charset=utf-8', filename: 'agents-office-results.md' })],
     ['PUT', /^\/api\/company$/, (_, body) => (store.setCompany(body), company())],
@@ -203,6 +203,13 @@ export function createApp({ store, runner, env = process.env }) {
       return send(res, 400, { error: err.message });
     }
   };
+}
+
+// Per-agent stats plus the office's estimated total spend (null until an agent has prices).
+function spendAndStats(store) {
+  const stats = store.stats();
+  const costs = Object.values(stats).map((s) => s.cost).filter((c) => c !== null);
+  return { stats, spend: costs.length ? Math.round(costs.reduce((a, b) => a + b, 0) * 10000) / 10000 : null };
 }
 
 export function companyFor(store, env = process.env) {
