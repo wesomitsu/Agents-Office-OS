@@ -182,8 +182,9 @@ export function createStore(path, { backups = 7, today = () => new Date().toISOS
     tasks: () => state.tasks,
     task: (id) => state.tasks.find((t) => t.id === id),
 
-    addTask({ title, details = '', agentId, priority = 'normal', due = '', repeat = '', model = '', tags = [], autoStart = '' }) {
+    addTask({ title, details = '', agentId, priority = 'normal', due = '', repeat = '', model = '', tags = [], autoStart = '', then = '' }) {
       due = checkDue(due);
+      if (then && !agent(then)) throw new Error(`unknown agent "${then}" to hand off to`);
       autoStart = autoStart === true || autoStart === 'true' ? 'true' : '';
       if (autoStart && !due) throw new Error('pick a due date to start a task automatically');
       tags = checkTags(tags);
@@ -203,6 +204,7 @@ export function createStore(path, { backups = 7, today = () => new Date().toISOS
         model,
         tags,
         autoStart,
+        then: then ? String(then) : '',
         status: 'todo',
         output: '',
         error: '',
@@ -254,10 +256,11 @@ export function createStore(path, { backups = 7, today = () => new Date().toISOS
       if ('autoStart' in changes) changes = { ...changes, autoStart: changes.autoStart === true || changes.autoStart === 'true' ? 'true' : '' };
       if ((changes.autoStart ?? t.autoStart) && !(changes.due ?? t.due)) throw new Error('pick a due date to start a task automatically');
       if ('repeat' in changes && !REPEATS.has(changes.repeat)) throw new Error(`bad repeat "${changes.repeat}" (use daily, weekdays, weekly or monthly)`);
+      if (changes.then && !agent(changes.then)) throw new Error(`unknown agent "${changes.then}" to hand off to`);
       if ('agentId' in changes && !agent(changes.agentId)) throw new Error(`unknown agent "${changes.agentId}"`);
       if ('title' in changes && !String(changes.title).trim()) throw new Error('title is required');
       if (changes.priority && !PRIORITIES.has(changes.priority)) throw new Error(`bad priority "${changes.priority}"`);
-      for (const k of ['status', 'priority', 'due', 'repeat', 'agentId', 'model', 'autoStart', 'rating', 'output', 'error', 'title', 'details', 'startedAt', 'finishedAt']) if (k in changes) t[k] = String(changes[k]);
+      for (const k of ['status', 'priority', 'due', 'repeat', 'agentId', 'model', 'autoStart', 'then', 'rating', 'output', 'error', 'title', 'details', 'startedAt', 'finishedAt']) if (k in changes) t[k] = String(changes[k]);
       t.updatedAt = new Date().toISOString();
       save();
       return t;
@@ -317,7 +320,7 @@ export function createStore(path, { backups = 7, today = () => new Date().toISOS
         while (t.repeat === 'weekdays' && [0, 6].includes(base.getUTCDay())) base.setUTCDate(base.getUTCDate() + 1);
       }
       t.nextCreated = true;
-      return this.addTask({ title: t.title, details: t.details, agentId: t.agentId, priority: t.priority, repeat: t.repeat, model: t.model, tags: t.tags, autoStart: t.autoStart, due: base.toISOString().slice(0, 10) });
+      return this.addTask({ title: t.title, details: t.details, agentId: t.agentId, priority: t.priority, repeat: t.repeat, model: t.model, tags: t.tags, autoStart: t.autoStart, then: t.then, due: base.toISOString().slice(0, 10) });
     },
 
     // Deleted tasks go to a small trash (the 20 most recent) so they can be undone.

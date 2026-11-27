@@ -311,3 +311,25 @@ test('a repeating auto-start task keeps auto-start on its next copy', async () =
   s.updateTask(t.id, { status: 'done' });
   assert.equal(s.scheduleNext(t.id).autoStart, 'true');
 });
+
+test('a task with "then" hands its result to the next agent and starts it', async () => {
+  const s = store();
+  const t = s.addTask({ title: 'Launch campaign', agentId: 'marketing', then: 'social' });
+  const calls = [];
+  const runner = createRunner(s, { complete: async (req) => (calls.push(req.prompt), { text: `answer ${calls.length}`, usage: { input: 1, output: 1 } }) });
+  await runner.run(t.id);
+  const next = s.tasks().find((x) => x.agentId === 'social');
+  assert.ok(next, 'handed-off task created');
+  while (s.task(next.id).status !== 'done') await new Promise((r) => setTimeout(r, 5));
+  assert.match(calls[1], /answer 1/);
+  assert.equal(s.task(next.id).then, '');
+  assert.throws(() => s.addTask({ title: 'x', agentId: 'support', then: 'nobody' }), /unknown agent "nobody"/);
+});
+
+test('a failed task does not hand off', async () => {
+  const s = store();
+  const t = s.addTask({ title: 'Launch campaign', agentId: 'marketing', then: 'social' });
+  const runner = createRunner(s, { complete: async () => { throw new Error('down'); } });
+  await runner.run(t.id);
+  assert.equal(s.tasks().length, 1);
+});

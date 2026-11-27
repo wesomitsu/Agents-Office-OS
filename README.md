@@ -32,6 +32,7 @@ them work, and read what they hand back.
 - **Activity feed**: the last 100 things that happened (tasks created, finished, failed, deleted)
 - **Follow-ups**: reply to a finished task ("make it shorter") and the agent revises it, keeping the conversation
 - **Hand-offs**: pass a result to another agent, e.g. Marketing's campaign to Social Media for posts
+- **Chains**: pick "When done, hand off to" on a task and its result goes to that agent, who starts on it right away (works with repeats, so a weekly campaign can turn into posts by itself)
 - **Your keys stay yours**: keys are read from your local `.env` file only, never saved in the office data or sent to the browser
 - Light and dark mode (follows your system, or pick one with 🌓), works on phones, no build step, runs on Node 22+
 
@@ -164,7 +165,7 @@ work for.
 |---|---|---|
 | `GET` | `/api/health` | `{ ok: true }` for Docker and uptime monitors (no login needed) |
 | `GET` | `/api/office` | Agents, tasks, provider status and estimated total `spend` (`null` until an agent has prices) |
-| `POST` | `/api/tasks` | Create a task `{ title, details, agentId, priority, due, repeat, autoStart }` (`high`/`normal`/`low`, due as `YYYY-MM-DD`, repeat `daily`/`weekdays`/`weekly`/`monthly`, `autoStart: true` starts it on its due date) |
+| `POST` | `/api/tasks` | Create a task `{ title, details, agentId, priority, due, repeat, autoStart, then }` (`high`/`normal`/`low`, due as `YYYY-MM-DD`, repeat `daily`/`weekdays`/`weekly`/`monthly`, `autoStart: true` starts it on its due date, `then` is the agent id that gets the result when it's done) |
 | `POST` | `/api/tasks/:id/run` | Start (or redo) a task |
 | `POST` | `/api/tasks/:id/stop` | Stop a running or queued task (it fails with "Stopped") |
 | `POST` | `/api/tasks/:id/handoff` | Pass a finished result to another agent `{ agentId, note, run }` |
