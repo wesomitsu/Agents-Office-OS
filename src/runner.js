@@ -124,6 +124,11 @@ export function createRunner(store, { complete: call = complete, company = {}, n
         if (done) store.log(done.status === 'done' ? `${agent.name} finished "${done.title}"` : `${agent.name} couldn't finish "${done.title}": ${done.error}`);
         store.scheduleNext(taskId);
         notify(store.task(taskId), agent).catch(() => {});
+        // "Then hand off to": pass the result on and start the next agent.
+        if (done?.status === 'done' && done.then && store.agent(done.then)) {
+          const next = store.handoff(taskId, { agentId: done.then });
+          this.run(next.id).catch(() => {});
+        }
       }
     },
 
