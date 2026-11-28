@@ -120,7 +120,19 @@ function announceChanges(before, after) {
     if (was === 'working' && t.status === 'failed') notes.push(`${agentName(t.agentId)} couldn't finish "${t.title}".`);
   }
   if (notes.length) $('#announcer').textContent = notes.join(' ');
+  // While you're in another tab, the tab title counts what finished: "(2) Agents Office OS".
+  if (document.hidden && notes.length) {
+    unseen += notes.length;
+    document.title = `(${unseen}) ${TITLE}`;
+  }
 }
+const TITLE = document.title;
+let unseen = 0;
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) return;
+  unseen = 0;
+  document.title = TITLE;
+});
 const agentName = (id) => office.agents.find((a) => a.id === id)?.name ?? 'An agent';
 
 const RANK = { high: 0, normal: 1, low: 2 };

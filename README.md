@@ -29,6 +29,7 @@ them work, and read what they hand back.
 - **Repeating tasks**: set a task to repeat daily, on weekdays, weekly or monthly and the next one is queued when it's done
 - **Start on the due date**: tick "Start automatically on the due date" and the task starts by itself once that day comes (checked every minute while the office is open); with a repeat, every copy does the same, so a daily digest runs hands-free
 - **Ratings**: 👍 or 👎 a result; each desk shows the totals, so you can see which agent (or model) works best
+- **Tab badge**: while you're in another tab, the tab title counts tasks that finished or failed, e.g. `(2) Agents Office OS`, until you look
 - **Activity feed**: the last 100 things that happened (tasks created, finished, failed, deleted)
 - **Follow-ups**: reply to a finished task ("make it shorter") and the agent revises it, keeping the conversation
 - **Hand-offs**: pass a result to another agent, e.g. Marketing's campaign to Social Media for posts
